@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, Suspense, useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { CameraControls, Sky, Stars, Html, Edges } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -140,39 +140,93 @@ function House({ position, rotation = [0, 0, 0] }) {
     );
 }
 
+function InstancedTerrain({ positions, geo, mats }) {
+    const meshRef = useRef();
+    
+    useEffect(() => {
+        if (!meshRef.current) return;
+        const dummy = new THREE.Object3D();
+        positions.forEach((pos, i) => {
+            dummy.position.set(pos[0], pos[1], pos[2]);
+            dummy.updateMatrix();
+            meshRef.current.setMatrixAt(i, dummy.matrix);
+        });
+        meshRef.current.instanceMatrix.needsUpdate = true;
+    }, [positions]);
+
+    return (
+        <instancedMesh ref={meshRef} args={[geo, mats, positions.length]} receiveShadow castShadow />
+    );
+}
+
+function getTerrainHeight(x, z) {
+    const distFromCenter = Math.sqrt(x*x + z*z);
+    if (distFromCenter < 12) return -0.5; // Keep village center flat
+
+    let y = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 4;
+    y += Math.sin(x * 0.05 + z * 0.08) * 3;
+    
+    const blend = Math.min(1, (distFromCenter - 12) / 10);
+    return Math.floor(y * blend) - 0.5; 
+}
+
 // World Terrain Generation
 function World() {
-    const blocks = useMemo(() => {
-        const b = [];
-        const size = 10; // Reduced to 21x21 grid for better performance
+    const terrainData = useMemo(() => {
+        const size = 30; // 61x61 grid (3700+ blocks)
+        const blocksByType = { grass: [], path: [], stone: [], dirt: [] };
+        const trees = [];
         
         for (let x = -size; x <= size; x++) {
             for (let z = -size; z <= size; z++) {
-                // Create a basic path cross
+                const y = getTerrainHeight(x, z);
+                
                 const isPath = (Math.abs(x) <= 1 || Math.abs(z) <= 1) && Math.abs(x) < 8 && Math.abs(z) < 8;
+                let type = "grass";
                 
-                b.push(<Block key={`${x}_${z}`} position={[x, -0.5, z]} type={isPath ? "path" : "grass"} />);
+                if (isPath) type = "path";
+                else if (y > 2) type = "stone";
                 
-                // Add some random trees, but not on the path or near the center
-                if (!isPath && Math.random() > 0.96 && Math.abs(x) > 3 && Math.abs(z) > 3) {
-                    const treeScale = 0.6 + Math.random() * 0.6;
-                    b.push(<Tree key={`tree_${x}_${z}`} position={[x, 0.5, z]} scale={treeScale} />);
+                blocksByType[type].push([x, y, z]);
+                
+                // Add dirt underneath surface blocks to prevent gaps when hills rise
+                if (y > -0.5 && type !== "path") {
+                    for (let dy = y - 1; dy >= -0.5; dy--) {
+                        blocksByType["dirt"].push([x, dy, z]);
+                    }
+                }
+                
+                if (type === "grass" && Math.random() > 0.98 && Math.abs(x) > 4 && Math.abs(z) > 4) {
+                    trees.push({ pos: [x, y + 1, z], scale: 0.6 + Math.random() * 0.6 });
                 }
             }
         }
-        return b;
+        return { blocksByType, trees };
     }, []);
 
     return (
         <group>
-            {/* Infinite grassy plains to hide the edge of the grid */}
-            <mesh position={[0, -0.51, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-                <planeGeometry args={[500, 500]} />
+            {/* Deep base ground */}
+            <mesh position={[0, -2, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+                <planeGeometry args={[1000, 1000]} />
                 <meshStandardMaterial color="#5d9c4b" />
             </mesh>
-            {blocks}
             
-            {/* Add some houses for the villagers */}
+            {Object.entries(terrainData.blocksByType).map(([type, positions]) => (
+                positions.length > 0 && (
+                    <InstancedTerrain 
+                        key={type} 
+                        positions={positions} 
+                        geo={blockGeo} 
+                        mats={blockMats[type] || blockMats.grass} 
+                    />
+                )
+            ))}
+            
+            {terrainData.trees.map((t, i) => (
+                <Tree key={`tree_${i}`} position={t.pos} scale={t.scale} />
+            ))}
+            
             <House position={[-6, 0, -9]} rotation={[0, 0, 0]} />
             <House position={[9, 0, 6]} rotation={[0, -Math.PI / 2, 0]} />
             <House position={[-6, 0, 9]} rotation={[0, Math.PI, 0]} />
@@ -191,9 +245,30 @@ const skinMat = new THREE.MeshStandardMaterial({ color: "#e8b28a" });
 
 function Villager({ position, roleColor = "#5c4033", facing = 0 }) {
     const roleMat = useMemo(() => new THREE.MeshStandardMaterial({ color: roleColor }), [roleColor]);
+    const groupRef = useRef();
+
+    useFrame(({ camera }) => {
+        if (!groupRef.current) return;
+        const dist = camera.position.distanceTo(groupRef.current.position);
+        
+        if (dist < 15) {
+            // Store current rotation
+            const currentY = groupRef.current.rotation.y;
+            // Look at camera
+            groupRef.current.lookAt(camera.position.x, groupRef.current.position.y, camera.position.z);
+            let targetY = groupRef.current.rotation.y;
+            
+            // Fix lookAt rotation wrapping issues
+            groupRef.current.rotation.y = currentY; 
+            // Lerp to target
+            groupRef.current.rotation.y = THREE.MathUtils.lerp(currentY, targetY, 0.1);
+        } else {
+            groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, facing, 0.05);
+        }
+    });
 
     return (
-        <group position={position} rotation={[0, facing, 0]}>
+        <group position={position} ref={groupRef}>
             {/* Legs */}
             <mesh position={[0, 0.375, 0]} castShadow geometry={legGeo} material={legMat} />
             {/* Torso/Robe */}
@@ -321,12 +396,34 @@ function Scene({ activeSection, setActiveSection }) {
                 </Html>
             </group>
 
-            <CameraControls ref={controlsRef} makeDefault minDistance={2} maxDistance={25} maxPolarAngle={Math.PI / 2 + 0.1} />
+            <CameraControls ref={controlsRef} makeDefault minDistance={2} maxDistance={60} maxPolarAngle={Math.PI / 2 + 0.1} />
         </>
     );
 }
 
 /* --------------------------- MAIN UI COMPONENT --------------------------- */
+
+// Play a retro "pop" sound using AudioContext
+const playClickSound = () => {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "square";
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.1);
+    } catch (e) {
+        // Ignore audio errors (e.g. strict autoplay policies)
+    }
+};
 
 export default function MinecraftPortfolio() {
     const [activeSlot, setActiveSlot] = useState(1);
@@ -352,22 +449,22 @@ export default function MinecraftPortfolio() {
 
             <nav className="hotbar-nav">
                 <div className="hotbar-inner">
-                    <button className={activeSlot === 1 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => setActiveSlot(1)}>
+                    <button className={activeSlot === 1 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => { playClickSound(); setActiveSlot(1); }}>
                         <span className="slot-num">1</span>
                         <div className="slot-icon">🏠</div>
                         <span className="slot-label">Guide</span>
                     </button>
-                    <button className={activeSlot === 2 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => setActiveSlot(2)}>
+                    <button className={activeSlot === 2 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => { playClickSound(); setActiveSlot(2); }}>
                         <span className="slot-num">2</span>
                         <div className="slot-icon">📖</div>
                         <span className="slot-label">Librarian</span>
                     </button>
-                    <button className={activeSlot === 3 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => setActiveSlot(3)}>
+                    <button className={activeSlot === 3 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => { playClickSound(); setActiveSlot(3); }}>
                         <span className="slot-num">3</span>
                         <div className="slot-icon">⚒️</div>
                         <span className="slot-label">Blacksmith</span>
                     </button>
-                    <button className={activeSlot === 4 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => setActiveSlot(4)}>
+                    <button className={activeSlot === 4 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => { playClickSound(); setActiveSlot(4); }}>
                         <span className="slot-num">4</span>
                         <div className="slot-icon">✨</div>
                         <span className="slot-label">Cleric</span>
@@ -381,7 +478,7 @@ export default function MinecraftPortfolio() {
 /* ------------------------------ CSS ------------------------------ */
 
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
   --bg: #87CEEB;
@@ -418,22 +515,21 @@ body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 
 /* Villager Dialogue Boxes */
 .villager-dialog {
-  background: rgba(20, 20, 20, 0.85);
-  border: 3px solid #555;
-  border-radius: 4px;
-  padding: 20px; color: #fff;
+  background: #c6c6c6;
+  border: 4px solid;
+  border-color: #ffffff #555555 #555555 #ffffff;
+  padding: 20px; color: #333;
   width: 320px;
-  text-shadow: 1px 1px 0 #000;
   pointer-events: auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  box-shadow: 8px 8px 0px rgba(0,0,0,0.3);
   transform: translateY(-20px);
 }
 .villager-dialog::after {
-  content: ''; position: absolute; bottom: -15px; left: 50%; transform: translateX(-50%);
-  border-width: 15px 15px 0; border-style: solid; border-color: rgba(20, 20, 20, 0.85) transparent transparent transparent;
+  content: ''; position: absolute; bottom: -19px; left: 50%; transform: translateX(-50%);
+  border-width: 15px 15px 0; border-style: solid; border-color: #555555 transparent transparent transparent;
 }
-.villager-dialog h3 { margin: 0 0 12px 0; font-family: 'Space Grotesk', sans-serif; font-size: 20px; color: var(--gold); }
-.villager-dialog p { margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #ddd; }
+.villager-dialog h3 { margin: 0 0 16px 0; font-family: 'Press Start 2P', monospace; font-size: 14px; color: #333; line-height: 1.4; }
+.villager-dialog p { margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #222; font-family: 'Inter', sans-serif; }
 
 /* About Dialog Specifics */
 .about-dialog { width: 360px; }
@@ -470,11 +566,13 @@ body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 .skills-dialog { width: 340px; }
 .wp-skills-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .wp-skill-slot {
-  background: rgba(0,0,0,0.6); border: 2px solid #444;
-  padding: 8px; text-align: center; font-size: 12px;
-  font-family: 'JetBrains Mono', monospace; color: #ccc;
+  background: #8b8b8b; border: 2px solid;
+  border-color: #373737 #ffffff #ffffff #373737;
+  padding: 10px 4px; text-align: center; font-size: 10px;
+  font-family: 'Press Start 2P', monospace; color: #fff;
+  text-shadow: 2px 2px 0 #3f3f3f; cursor: pointer; transition: 0.1s;
 }
-.wp-skill-slot:hover { border-color: var(--gold); color: var(--gold); }
+.wp-skill-slot:hover { background: var(--grass); border-color: #fff; }
 
 /* Hotbar */
 .hotbar-nav { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50; }
@@ -497,10 +595,10 @@ body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 /* Mobile Compatibility */
 @media (max-width: 600px) {
   .villager-dialog, .about-dialog, .projects-dialog, .skills-dialog {
-    width: 260px !important;
+    width: 280px !important;
     padding: 14px !important;
   }
-  .villager-dialog h3 { font-size: 16px; margin-bottom: 8px; }
+  .villager-dialog h3 { font-size: 12px; margin-bottom: 8px; }
   .villager-dialog p { font-size: 12px; margin-bottom: 12px; }
   .projects-grid { grid-template-columns: 1fr; }
   .wp-skills-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
