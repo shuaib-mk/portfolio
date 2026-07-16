@@ -19,7 +19,7 @@ const ABOUT = {
 };
 
 const SKILLS = [
-    { name: "Every Language", tier: "master" },
+    { name: "Try to Stump Me", tier: "master" },
     { name: "React", tier: "expert" },
     { name: "TypeScript", tier: "expert" },
     { name: "Node.js", tier: "expert" },
