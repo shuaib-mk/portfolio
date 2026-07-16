@@ -19,7 +19,6 @@ const ABOUT = {
 };
 
 const SKILLS = [
-    { name: "Try to Stump Me", tier: "master" },
     { name: "React", tier: "expert" },
     { name: "TypeScript", tier: "expert" },
     { name: "Node.js", tier: "expert" },
@@ -38,28 +37,38 @@ const PROJECTS = [
 
 /* ----------------------------- 3D COMPONENTS ----------------------------- */
 
+// Reusable geometries and materials for Blocks
+const blockGeo = new THREE.BoxGeometry(1, 1, 1);
+const blockGeoSmall = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+
+const createBlockMats = (sideColor, topColor) => [
+    new THREE.MeshStandardMaterial({ color: sideColor }), // right
+    new THREE.MeshStandardMaterial({ color: sideColor }), // left
+    new THREE.MeshStandardMaterial({ color: topColor }),  // top
+    new THREE.MeshStandardMaterial({ color: sideColor }), // bottom
+    new THREE.MeshStandardMaterial({ color: sideColor }), // front
+    new THREE.MeshStandardMaterial({ color: sideColor })  // back
+];
+
+const blockMats = {
+    grass: createBlockMats("#8B5A2B", "#5d9c4b"),
+    dirt: createBlockMats("#8B5A2B", "#8B5A2B"),
+    path: createBlockMats("#8B5A2B", "#9b7653"),
+    stone: createBlockMats("#7d7d7d", "#7d7d7d"),
+    wood: createBlockMats("#5c4033", "#8b5a2b"),
+    leaves: createBlockMats("#3b5e2b", "#3b5e2b"),
+    gold: createBlockMats("#e0b23c", "#e0b23c"),
+    diamond: createBlockMats("#6fd1d9", "#6fd1d9")
+};
+
 function Block({ position, type = "grass", scale = [1, 1, 1] }) {
-    let color = "#8B5A2B"; 
-    let topColor = "#5d9c4b"; 
-    
-    if (type === "dirt") { topColor = color; }
-    if (type === "path") { color = "#8B5A2B"; topColor = "#9b7653"; }
-    if (type === "stone") { color = "#7d7d7d"; topColor = "#7d7d7d"; }
-    if (type === "wood") { color = "#5c4033"; topColor = "#8b5a2b"; }
-    if (type === "leaves") { color = "#3b5e2b"; topColor = "#3b5e2b"; }
-    if (type === "gold") { color = "#e0b23c"; topColor = "#e0b23c"; }
-    if (type === "diamond") { color = "#6fd1d9"; topColor = "#6fd1d9"; }
+    const isFullSize = scale[0] === 1 && scale[1] === 1 && scale[2] === 1;
+    const geo = isFullSize ? blockGeo : blockGeoSmall;
+    const mats = blockMats[type] || blockMats.grass;
 
     return (
-        <mesh position={position} receiveShadow castShadow>
-            <boxGeometry args={scale} />
-            <meshStandardMaterial attach="material-0" color={color} />
-            <meshStandardMaterial attach="material-1" color={color} />
-            <meshStandardMaterial attach="material-2" color={topColor} />
-            <meshStandardMaterial attach="material-3" color={color} />
-            <meshStandardMaterial attach="material-4" color={color} />
-            <meshStandardMaterial attach="material-5" color={color} />
-            {scale[0] === 1 && scale[1] === 1 && scale[2] === 1 && (
+        <mesh position={position} receiveShadow castShadow geometry={geo} material={mats}>
+            {isFullSize && (
                 <Edges scale={1} threshold={15} color="#111" />
             )}
         </mesh>
@@ -68,24 +77,27 @@ function Block({ position, type = "grass", scale = [1, 1, 1] }) {
 
 // A detailed tree with smaller, scattered leaf blocks
 function Tree({ position, scale = 1 }) {
-    const leaves = [];
-    for (let x = -1.2; x <= 1.2; x += 0.4) {
-        for (let y = 2.2; y <= 4.2; y += 0.4) {
-            for (let z = -1.2; z <= 1.2; z += 0.4) {
-                const distSq = x*x + (y-3.2)*(y-3.2)*0.8 + z*z;
-                if (distSq <= 1.6 && Math.random() > 0.2) {
-                    leaves.push(
-                        <Block 
-                            key={`l_${x}_${y}_${z}`} 
-                            position={[x, y, z]} 
-                            type="leaves" 
-                            scale={[0.4, 0.4, 0.4]} 
-                        />
-                    );
+    const leaves = useMemo(() => {
+        const l = [];
+        for (let x = -1.2; x <= 1.2; x += 0.4) {
+            for (let y = 2.2; y <= 4.2; y += 0.4) {
+                for (let z = -1.2; z <= 1.2; z += 0.4) {
+                    const distSq = x*x + (y-3.2)*(y-3.2)*0.8 + z*z;
+                    if (distSq <= 1.6 && Math.random() > 0.2) {
+                        l.push(
+                            <Block 
+                                key={`l_${x}_${y}_${z}`} 
+                                position={[x, y, z]} 
+                                type="leaves" 
+                                scale={[0.4, 0.4, 0.4]} 
+                            />
+                        );
+                    }
                 }
             }
         }
-    }
+        return l;
+    }, []);
 
     return (
         <group position={position} scale={[scale, scale, scale]}>
@@ -98,31 +110,30 @@ function Tree({ position, scale = 1 }) {
     );
 }
 
-// A simple blocky house
+// Reusable geometries and materials for House
+const houseBaseGeo = new THREE.BoxGeometry(3, 2, 3);
+const houseMat1 = new THREE.MeshStandardMaterial({ color: "#dcd3b6" });
+const doorGeo = new THREE.BoxGeometry(0.8, 1.5, 0.1);
+const doorMat = new THREE.MeshStandardMaterial({ color: "#5c4033" });
+const roof1Geo = new THREE.BoxGeometry(3.4, 0.5, 3.4);
+const roofMat = new THREE.MeshStandardMaterial({ color: "#8b5a2b" });
+const roof2Geo = new THREE.BoxGeometry(2, 0.5, 2);
+
 function House({ position, rotation = [0, 0, 0] }) {
     return (
         <group position={position} rotation={rotation}>
             {/* Main Walls */}
-            <mesh position={[0, 1, 0]} castShadow receiveShadow>
-                <boxGeometry args={[3, 2, 3]} />
-                <meshStandardMaterial color="#dcd3b6" />
+            <mesh position={[0, 1, 0]} castShadow receiveShadow geometry={houseBaseGeo} material={houseMat1}>
                 <Edges color="#111" />
             </mesh>
             {/* Door */}
-            <mesh position={[0, 0.5, 1.51]} castShadow>
-                <boxGeometry args={[0.8, 1.5, 0.1]} />
-                <meshStandardMaterial color="#5c4033" />
-            </mesh>
+            <mesh position={[0, 0.5, 1.51]} castShadow geometry={doorGeo} material={doorMat} />
             {/* Roof Tier 1 */}
-            <mesh position={[0, 2.25, 0]} castShadow receiveShadow>
-                <boxGeometry args={[3.4, 0.5, 3.4]} />
-                <meshStandardMaterial color="#8b5a2b" />
+            <mesh position={[0, 2.25, 0]} castShadow receiveShadow geometry={roof1Geo} material={roofMat}>
                 <Edges color="#111" />
             </mesh>
             {/* Roof Tier 2 */}
-            <mesh position={[0, 2.75, 0]} castShadow receiveShadow>
-                <boxGeometry args={[2, 0.5, 2]} />
-                <meshStandardMaterial color="#8b5a2b" />
+            <mesh position={[0, 2.75, 0]} castShadow receiveShadow geometry={roof2Geo} material={roofMat}>
                 <Edges color="#111" />
             </mesh>
         </group>
@@ -169,36 +180,30 @@ function World() {
     );
 }
 
-// Blocky Villager NPC Component
+// Reusable geometries and materials for Villager
+const legGeo = new THREE.BoxGeometry(0.5, 0.75, 0.5);
+const torsoGeo = new THREE.BoxGeometry(0.6, 0.75, 0.6);
+const armGeo = new THREE.BoxGeometry(0.8, 0.3, 0.3);
+const headGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+const noseGeo = new THREE.BoxGeometry(0.15, 0.3, 0.15);
+const legMat = new THREE.MeshStandardMaterial({ color: "#4a3b32" });
+const skinMat = new THREE.MeshStandardMaterial({ color: "#e8b28a" });
+
 function Villager({ position, roleColor = "#5c4033", facing = 0 }) {
-    const skinColor = "#e8b28a";
+    const roleMat = useMemo(() => new THREE.MeshStandardMaterial({ color: roleColor }), [roleColor]);
+
     return (
         <group position={position} rotation={[0, facing, 0]}>
             {/* Legs */}
-            <mesh position={[0, 0.375, 0]} castShadow>
-                <boxGeometry args={[0.5, 0.75, 0.5]} />
-                <meshStandardMaterial color="#4a3b32" />
-            </mesh>
+            <mesh position={[0, 0.375, 0]} castShadow geometry={legGeo} material={legMat} />
             {/* Torso/Robe */}
-            <mesh position={[0, 1.125, 0]} castShadow>
-                <boxGeometry args={[0.6, 0.75, 0.6]} />
-                <meshStandardMaterial color={roleColor} />
-            </mesh>
+            <mesh position={[0, 1.125, 0]} castShadow geometry={torsoGeo} material={roleMat} />
             {/* Arms (crossed) */}
-            <mesh position={[0, 1.1, 0.35]} castShadow>
-                <boxGeometry args={[0.8, 0.3, 0.3]} />
-                <meshStandardMaterial color={skinColor} />
-            </mesh>
+            <mesh position={[0, 1.1, 0.35]} castShadow geometry={armGeo} material={skinMat} />
             {/* Head */}
-            <mesh position={[0, 1.8, 0]} castShadow>
-                <boxGeometry args={[0.8, 0.8, 0.8]} />
-                <meshStandardMaterial color={skinColor} />
-            </mesh>
+            <mesh position={[0, 1.8, 0]} castShadow geometry={headGeo} material={skinMat} />
             {/* Nose */}
-            <mesh position={[0, 1.6, 0.45]} castShadow>
-                <boxGeometry args={[0.15, 0.3, 0.15]} />
-                <meshStandardMaterial color={skinColor} />
-            </mesh>
+            <mesh position={[0, 1.6, 0.45]} castShadow geometry={noseGeo} material={skinMat} />
         </group>
     );
 }
@@ -254,7 +259,8 @@ function Scene({ activeSection, setActiveSection }) {
                         <h3>{PROFILE.name}</h3>
                         <p>{PROFILE.role}</p>
                         <p><em>"{PROFILE.tagline}"</em></p>
-                        <a href={`mailto:${PROFILE.email}`} className="wp-btn wp-hire-btn">Hire Me</a>
+                        <p><strong>Think you can stump me? I dare you to test my skills.</strong></p>
+                        <a href={`mailto:${PROFILE.email}`} className="wp-btn wp-hire-btn">Hire & Test Me</a>
                     </div>
                 </Html>
             </group>
@@ -330,7 +336,7 @@ export default function MinecraftPortfolio() {
             <style>{CSS}</style>
             
             <div className="canvas-container">
-                <Canvas shadows camera={{ position: [0, 5, 5], fov: 55 }}>
+                <Canvas shadows dpr={[1, 1.5]} camera={{ position: [0, 5, 5], fov: 55 }}>
                     <Suspense fallback={null}>
                         <Scene activeSection={activeSlot} setActiveSection={setActiveSlot} />
                     </Suspense>
