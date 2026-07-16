@@ -188,8 +188,8 @@ function NPC({ data, isMobile, children }) {
     const [opacity, setOpacity] = useState(0);
     const vec = useMemo(() => new THREE.Vector3(...data.pos), [data.pos]);
     
-    useFrame((state) => {
-        const dist = state.camera.position.distanceTo(vec);
+    useFrame(() => {
+        const dist = playerState.position.distanceTo(vec);
         const targetOpacity = dist < (isMobile ? 5 : 4) ? 1 : 0; 
         if (opacity !== targetOpacity) {
             setOpacity(targetOpacity);
@@ -213,7 +213,7 @@ function NPC({ data, isMobile, children }) {
             >
                 <div 
                     className="villager-dialog-wrapper" 
-                    onPointerDown={(e) => e.stopPropagation()} // Prevent canvas from eating the click
+                    onPointerDown={(e) => e.stopPropagation()} 
                     onClick={(e) => e.stopPropagation()}
                 >
                     {children}
@@ -235,35 +235,111 @@ const NPCS = [
     { id: 7, type: "Fletcher", roleColor: "#6b5e52", pos: [-6, 0, 1], facing: Math.PI / 2 }
 ];
 
-function Player({ isMobile, keys }) {
-    const { camera } = useThree();
+// Export global player state so NPCs can read it
+export const playerState = {
+    position: new THREE.Vector3(0, 0, 3)
+};
+
+function Player({ isMobile, keys, hasStarted }) {
+    const { camera, gl } = useThree();
+    const playerRef = useRef();
+    const playerFacing = useRef(0);
 
     useEffect(() => {
-        camera.position.set(0, 1.0, 3);
         camera.rotation.order = 'YXZ';
+        // Initialize player position
+        playerState.position.set(0, 0, 3);
     }, [camera]);
 
-    const speed = 4;
-    const direction = new THREE.Vector3();
-    const frontVector = new THREE.Vector3();
-    const sideVector = new THREE.Vector3();
+    // Mobile touch camera rotation
+    useEffect(() => {
+        if (!isMobile || !hasStarted) return;
+        
+        let lastTouch = { x: 0, y: 0 };
+        
+        const handleTouchStart = (e) => {
+            lastTouch = { x: e.touches[0].pageX, y: e.touches[0].pageY };
+        };
 
+        const handleTouchMove = (e) => {
+            const touchX = e.touches[0].pageX;
+            const touchY = e.touches[0].pageY;
+            const dx = touchX - lastTouch.x;
+            const dy = touchY - lastTouch.y;
+            
+            camera.rotation.y -= dx * 0.005;
+            camera.rotation.x -= dy * 0.005;
+            camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+            
+            lastTouch = { x: touchX, y: touchY };
+        };
+
+        const canvas = gl.domElement;
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: true });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
+        
+        return () => {
+            canvas.removeEventListener('touchstart', handleTouchStart);
+            canvas.removeEventListener('touchmove', handleTouchMove);
+        };
+    }, [isMobile, hasStarted, camera, gl]);
+
+    const speed = 4;
+    
     useFrame((state, delta) => {
-        frontVector.set(0, 0, Number(keys.backward) - Number(keys.forward));
-        sideVector.set(Number(keys.left) - Number(keys.right), 0, 0);
+        const front = Number(keys.backward) - Number(keys.forward);
+        const side = Number(keys.left) - Number(keys.right);
         
-        direction.subVectors(frontVector, sideVector).normalize().multiplyScalar(speed * delta);
-        direction.applyEuler(camera.rotation);
+        const inputVec = new THREE.Vector3(side, 0, front);
         
-        camera.position.x += direction.x;
-        camera.position.z += direction.z;
-        camera.position.y = 1.0; 
+        if (inputVec.lengthSq() > 0) {
+            inputVec.normalize().multiplyScalar(speed * delta);
+            // Move relative to the camera's yaw (horizontal rotation)
+            inputVec.applyAxisAngle(new THREE.Vector3(0, 1, 0), camera.rotation.y);
+            playerState.position.add(inputVec);
+            
+            // Calculate which way the player model should face
+            playerFacing.current = Math.atan2(inputVec.x, inputVec.z);
+        }
+
+        // Update the visual player model
+        if (playerRef.current) {
+            playerRef.current.position.copy(playerState.position);
+            
+            // Smoothly rotate the character to face movement direction
+            const currentRotation = playerRef.current.rotation.y;
+            let diff = playerFacing.current - currentRotation;
+            // Normalize angle diff to -PI to PI
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            playerRef.current.rotation.y += diff * 10 * delta;
+        }
+        
+        // 3rd Person Camera Orbit Logic
+        // Start camera exactly at player position
+        camera.position.copy(playerState.position);
+        
+        // Pull the camera back and up based on its own local rotation
+        // This makes it act like an orbit camera following behind
+        camera.translateZ(isMobile ? 5 : 4);
+        camera.translateY(isMobile ? 1.5 : 1.2);
+        
+        // Prevent camera from going under the floor
+        if (camera.position.y < 0.2) camera.position.y = 0.2;
     });
 
-    return !isMobile ? <PointerLockControls /> : null;
+    return (
+        <>
+            {!isMobile && <PointerLockControls />}
+            {/* The Player Character Model */}
+            <group ref={playerRef}>
+                <VillagerBody roleColor="#297fb8" facing={0} scale={0.45} />
+            </group>
+        </>
+    );
 }
 
-function Scene({ isMobile, keys }) {
+function Scene({ isMobile, keys, hasStarted }) {
     return (
         <>
             <color attach="background" args={['#87CEEB']} />
@@ -274,7 +350,7 @@ function Scene({ isMobile, keys }) {
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
             
             <World />
-            <Player isMobile={isMobile} keys={keys} />
+            <Player isMobile={isMobile} keys={keys} hasStarted={hasStarted} />
             
             <NPC data={NPCS[0]} isMobile={isMobile}>
                 <div className="villager-dialog">
@@ -346,10 +422,6 @@ export default function MinecraftPortfolio() {
     const [hasStarted, setHasStarted] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [keys, setKeys] = useState({ forward: false, backward: false, left: false, right: false });
-    
-    // Refs for mobile touch look
-    const cameraRef = useRef(null); 
-    const lastTouch = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
         const checkMobile = () => {
@@ -361,7 +433,7 @@ export default function MinecraftPortfolio() {
     }, []);
 
     useEffect(() => {
-        if (isMobile) return; // Don't use pointer lock on mobile
+        if (isMobile) return; 
         
         const handleLock = () => {
             setLocked(true);
@@ -379,7 +451,6 @@ export default function MinecraftPortfolio() {
         };
     }, [isMobile]);
 
-    // Keyboard handlers (shared between mobile and desktop if user has a keyboard on tablet)
     useEffect(() => {
         const handleKeyDown = (e) => {
             switch(e.code) {
@@ -405,30 +476,6 @@ export default function MinecraftPortfolio() {
         };
     }, []);
 
-    // Mobile touch look handler
-    const handleTouchStart = (e) => {
-        if (!hasStarted) return;
-        lastTouch.current = { x: e.touches[0].pageX, y: e.touches[0].pageY };
-    };
-
-    const handleTouchMove = (e) => {
-        if (!hasStarted || !isMobile) return;
-        const touchX = e.touches[0].pageX;
-        const touchY = e.touches[0].pageY;
-        const dx = touchX - lastTouch.current.x;
-        const dy = touchY - lastTouch.current.y;
-        
-        // Find camera in the scene (hacky but works since we don't have direct ref to R3F camera outside Canvas)
-        const camera = document.querySelector('canvas').__r3f?.root?.getState()?.camera;
-        if (camera) {
-            camera.rotation.y -= dx * 0.005;
-            camera.rotation.x -= dy * 0.005;
-            // Clamp pitch to avoid flipping
-            camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
-        }
-        lastTouch.current = { x: touchX, y: touchY };
-    };
-
     const handleDpad = (dir, isDown) => {
         setKeys(k => ({...k, [dir]: isDown}));
     };
@@ -437,19 +484,14 @@ export default function MinecraftPortfolio() {
         <div className="wp-root">
             <style>{CSS}</style>
             
-            <div 
-                className="canvas-container"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-            >
+            <div className="canvas-container">
                 <Canvas shadows camera={{ fov: 65 }}>
                     <Suspense fallback={null}>
-                        <Scene isMobile={isMobile} keys={keys} />
+                        <Scene isMobile={isMobile} keys={keys} hasStarted={hasStarted} />
                     </Suspense>
                 </Canvas>
                 
-                {/* Crosshair */}
-                {(locked || (isMobile && hasStarted)) && <div className="crosshair">+</div>}
+                {/* Removed crosshair since it's 3rd person now */}
             </div>
 
             {/* Start Overlay */}
