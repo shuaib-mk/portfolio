@@ -238,6 +238,17 @@ function World() {
                 }
 
                 if (type === "grass" && Math.random() > 0.98 && Math.abs(x) > 4 && Math.abs(z) > 4) {
+                    // Prevent trees from spawning inside houses or NPCs
+                    const isOccupied = 
+                        (Math.abs(-6 - x) < 4 && Math.abs(-6 - z) < 4) || // Librarian area
+                        (Math.abs(6 - x) < 4 && Math.abs(6 - z) < 4) ||   // Blacksmith area
+                        (Math.abs(-6 - x) < 4 && Math.abs(6 - z) < 4) ||  // Cleric area
+                        (Math.abs(9 - x) < 4 && Math.abs(6 - z) < 4) ||   // House 2
+                        (Math.abs(-6 - x) < 4 && Math.abs(9 - z) < 4) ||  // House 3
+                        (Math.abs(-6 - x) < 4 && Math.abs(-9 - z) < 4);   // House 1
+                    
+                    if (isOccupied) continue;
+
                     const s = 0.6 + Math.random() * 0.6;
                     
                     // To perfectly sit on the block below (which has top at y + 0.5), 
@@ -249,16 +260,23 @@ function World() {
                     blocksByType["wood"].push({ pos: [x, baseY + 2 * s, z], scale: [s, s, s] });
                     blocksByType["wood"].push({ pos: [x, baseY + 3 * s, z], scale: [s, s, s] });
                     
-                    for (let lx = -1.2; lx <= 1.2; lx += 0.4) {
-                        for (let ly = 2.2; ly <= 4.2; ly += 0.4) {
-                            for (let lz = -1.2; lz <= 1.2; lz += 0.4) {
-                                const distSq = lx * lx + (ly - 3.2) * (ly - 3.2) * 0.8 + lz * lz;
-                                if (distSq <= 1.6 && Math.random() > 0.1) {
-                                    blocksByType["leaves"].push({
-                                        pos: [x + lx * s, baseY + ly * s, z + lz * s],
-                                        scale: [0.4 * s, 0.4 * s, 0.4 * s]
-                                    });
+                    blocksByType["wood"].push({ pos: [x, baseY + 4 * s, z], scale: [s, s, s] });
+                    
+                    for (let ly = 2; ly <= 5; ly++) {
+                        let radius = (ly <= 3) ? 2 : 1;
+                        for (let lx = -radius; lx <= radius; lx++) {
+                            for (let lz = -radius; lz <= radius; lz++) {
+                                if (lx === 0 && lz === 0 && ly < 5) continue; // Skip trunk interior
+                                
+                                // Remove corners for a natural rounded canopy
+                                if (Math.abs(lx) === radius && Math.abs(lz) === radius) {
+                                    if (ly === 5 || Math.random() > 0.5) continue;
                                 }
+                                
+                                blocksByType["leaves"].push({
+                                    pos: [x + lx * s, baseY + ly * s, z + lz * s],
+                                    scale: [s, s, s]
+                                });
                             }
                         }
                     }
@@ -281,7 +299,7 @@ function World() {
                     <InstancedTerrain
                         key={type}
                         instances={instances}
-                        geo={type === "leaves" ? blockGeoSmall : blockGeo}
+                        geo={blockGeo}
                         mats={blockMats[type] || blockMats.grass}
                     />
                 )
@@ -499,7 +517,7 @@ function TraditionalView() {
                         <a href={ABOUT.github} target="_blank" rel="noreferrer">GitHub</a>
                         <a href={ABOUT.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
                         <a href={`mailto:${PROFILE.email}`}>Email</a>
-                        <a href="#" className="trad-download-btn">Download PDF</a>
+                        <a href="/resume.pdf" download="Resume_q04ti.pdf" className="trad-download-btn">Download PDF</a>
                     </div>
                 </div>
             </header>
@@ -806,7 +824,7 @@ body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 .wp-root {
   color: var(--bone);
   font-family: 'Inter', system-ui, sans-serif;
-  height: 100vh; width: 100vw; position: relative;
+  height: 100dvh; width: 100vw; position: relative;
 }
 
 .canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
@@ -887,7 +905,7 @@ body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 .wp-skill-slot:hover { background: var(--grass); border-color: #fff; }
 
 /* Hotbar */
-.hotbar-nav { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 50; }
+.hotbar-nav { position: absolute; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 50; }
 .hotbar-inner { display: flex; gap: 4px; background: rgba(0,0,0,0.6); padding: 4px; border: 2px solid #555; }
 .hotbar-slot {
   width: 56px; height: 56px; background: rgba(30, 30, 30, 0.8);
