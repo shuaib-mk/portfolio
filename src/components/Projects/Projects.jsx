@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Code2, ExternalLink, Search } from 'lucide-react';
+import ScrollReveal from '../ScrollReveal/ScrollReveal';
+import InfiniteMenu from '../InfiniteMenu/InfiniteMenu';
 import './Projects.css';
 
 const projectData = [
@@ -63,7 +65,7 @@ const Projects = () => {
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="section-title">Featured Projects</h2>
+        <ScrollReveal textClassName="section-title">Featured Projects</ScrollReveal>
       </motion.div>
 
       <div className="filter-container">
@@ -78,42 +80,17 @@ const Projects = () => {
         ))}
       </div>
 
-      <motion.div layout className="projects-grid">
-        <AnimatePresence>
-          {filteredProjects.map((project, index) => (
-            <motion.div
-              key={project.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="project-card glass-panel"
-            >
-              <div className="project-image-container">
-                <div className="project-overlay">
-                  <a href={project.github} target="_blank" rel="noopener noreferrer" className="project-link">
-                    <Code2 size={20} />
-                  </a>
-                  <a href={project.demo} target="_blank" rel="noopener noreferrer" className="project-link">
-                    <ExternalLink size={20} />
-                  </a>
-                </div>
-                <img src={project.image} alt={project.title} loading="lazy" className="project-image" />
-              </div>
-              <div className="project-content">
-                <h3 className="project-title">{project.title}</h3>
-                <p className="project-description">{project.description}</p>
-                <div className="project-tags">
-                  {project.tags.map(tag => (
-                    <span key={tag} className="tag">{tag}</span>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </motion.div>
+      <div className="infinite-menu-container">
+        <InfiniteMenu 
+          scale={1.6}
+          items={filteredProjects.map(p => ({
+            image: p.image,
+            link: p.demo || p.github,
+            title: p.title,
+            description: p.description
+          }))} 
+        />
+      </div>
       
       {filteredProjects.length === 0 && (
         <div className="no-results">

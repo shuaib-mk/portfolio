@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, MousePointer2 } from 'lucide-react';
+import { ArrowRight, MousePointer2, Code, Database, Paintbrush } from 'lucide-react';
+import CardSwap, { Card } from '../CardSwap/CardSwap';
+import ScrollReveal from '../ScrollReveal/ScrollReveal';
 import './Hero.css';
 
 const roles = [
@@ -61,7 +63,7 @@ const Hero = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          Hi, I'm <span className="text-gradient">John Doe</span>
+          Hi, I'm <span className="text-gradient">q04ti</span>
         </motion.h1>
         
         <motion.h2 
@@ -73,15 +75,16 @@ const Hero = () => {
           A <span className="typewriter-text">{displayText}<span className="cursor">|</span></span>
         </motion.h2>
         
-        <motion.p 
+        <motion.div 
           className="hero-bio"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          Passionate about creating beautiful, functional, and user-centric digital experiences. 
-          Specializing in modern web technologies and innovative design solutions.
-        </motion.p>
+          <ScrollReveal>
+            Passionate about creating beautiful, functional, and user-centric digital experiences. Specializing in modern web technologies and innovative design solutions.
+          </ScrollReveal>
+        </motion.div>
         
         <motion.div 
           className="hero-actions"
@@ -116,6 +119,37 @@ const Hero = () => {
             <p className="stat-label">Client Satisfaction</p>
           </div>
         </motion.div>
+      </div>
+      
+      <div className="hero-card-swap-container">
+        <CardSwap
+          cardDistance={60}
+          verticalDistance={70}
+          delay={5000}
+          pauseOnHover={false}
+        >
+          <Card className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ padding: '12px', background: 'rgba(168, 85, 247, 0.15)', borderRadius: '12px', width: 'fit-content' }}>
+              <Code size={28} color="var(--color-primary)" />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--color-text)' }}>Frontend Dev</h3>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', lineHeight: '1.6' }}>Building responsive and dynamic user interfaces.</p>
+          </Card>
+          <Card className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ padding: '12px', background: 'rgba(168, 85, 247, 0.15)', borderRadius: '12px', width: 'fit-content' }}>
+              <Database size={28} color="var(--color-primary)" />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--color-text)' }}>Backend Dev</h3>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', lineHeight: '1.6' }}>Architecting robust and scalable APIs.</p>
+          </Card>
+          <Card className="glass-panel" style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div style={{ padding: '12px', background: 'rgba(168, 85, 247, 0.15)', borderRadius: '12px', width: 'fit-content' }}>
+              <Paintbrush size={28} color="var(--color-primary)" />
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--color-text)' }}>UI/UX Design</h3>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem', lineHeight: '1.6' }}>Crafting beautiful and intuitive user experiences.</p>
+          </Card>
+        </CardSwap>
       </div>
       
       <motion.div 

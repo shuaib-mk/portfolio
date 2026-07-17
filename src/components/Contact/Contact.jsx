@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Code2, Briefcase, MessageSquare, Mail } from 'lucide-react';
+import ScrollReveal from '../ScrollReveal/ScrollReveal';
 import './Contact.css';
 
 const Contact = () => {
@@ -42,7 +43,7 @@ const Contact = () => {
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="section-title">Get In Touch</h2>
+        <ScrollReveal textClassName="section-title">Get In Touch</ScrollReveal>
       </motion.div>
 
       <div className="contact-content">
@@ -53,22 +54,22 @@ const Contact = () => {
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
         >
-          <h3 className="contact-subtitle">Let's talk about your next project</h3>
-          <p className="contact-text">
+          <ScrollReveal textClassName="contact-subtitle">Let's talk about your next project</ScrollReveal>
+          <ScrollReveal textClassName="contact-text">
             I'm currently available for freelance opportunities. Whether you have a question or just want to say hi, I'll try my best to get back to you!
-          </p>
+          </ScrollReveal>
           
           <div className="social-links">
-            <a href="mailto:your.email@domain.com" className="social-icon-link">
+            <a href="mailto:q04tiofficial@gmail.com" className="social-icon-link">
               <Mail size={24} />
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="social-icon-link">
+            <a href="https://github.com/q04ti" target="_blank" rel="noopener noreferrer" className="social-icon-link">
               <Code2 size={24} />
             </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="social-icon-link">
+            <a href="https://linkedin.com/in/q04ti" target="_blank" rel="noopener noreferrer" className="social-icon-link">
               <Briefcase size={24} />
             </a>
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-icon-link">
+            <a href="https://twitter.com/q04ti" target="_blank" rel="noopener noreferrer" className="social-icon-link">
               <MessageSquare size={24} />
             </a>
           </div>

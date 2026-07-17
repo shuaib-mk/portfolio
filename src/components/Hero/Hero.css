@@ -206,3 +206,26 @@
     padding: 0 24px;
   }
 }
+
+.hero-card-swap-container {
+  position: absolute;
+  bottom: 0;
+  right: 5%;
+  z-index: 0;
+  width: 400px;
+  height: 400px;
+}
+
+@media (max-width: 1024px) {
+  .hero-card-swap-container {
+    opacity: 0.3;
+    pointer-events: none;
+    right: -10%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-card-swap-container {
+    display: none;
+  }
+}

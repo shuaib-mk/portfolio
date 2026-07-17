@@ -3,19 +3,32 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { CameraControls, Sky, Stars, Html, Edges } from "@react-three/drei";
 import * as THREE from "three";
 
+
+
+function LoadingScreen() {
+    return (
+        <Html center>
+            <div style={{ color: "white", fontFamily: "monospace", fontSize: "20px", background: "rgba(0,0,0,0.5)", padding: "10px 20px", borderRadius: "5px" }}>
+                Generating Terrain...
+            </div>
+        </Html>
+    );
+}
+
 /* ----------------------------- DATA ----------------------------- */
 const PROFILE = {
     name: "q04ti",
     role: "Computer Application Student",
-    tagline: "I possess an intuitive mastery over every programming language in existence.",
+    tagline: "Passionate about building intuitive software, solving complex problems, and constantly learning new technologies.",
     email: "q04tiofficial@gmail.com",
     github: "https://github.com/q04ti"
 };
 
 const ABOUT = {
-    bio: "I'm a Computer Application Student. I don't just write syntax; I sync with the architecture of the universe. Give me a keyboard, the right playlist, and any programming language on earth—I will architect flawless, hyper-optimized systems.",
+    bio: "I'm a Computer Application Student who loves turning ideas into interactive experiences. Whether I'm building web applications, exploring new frameworks, or optimizing code, I'm always eager to take on new challenges and build things people love to use.",
     github: "https://github.com/q04ti",
     linkedin: "https://linkedin.com/in/q04ti",
+    hobbies: ["Building redstone logic", "Speedrunning algorithms", "Mining for tech stacks", "Home weightlifting"],
 };
 
 const SKILLS = [
@@ -33,6 +46,12 @@ const PROJECTS = [
     { name: "Realtime Ops Chat", desc: "Low-latency messaging layer using WebSockets and Redis.", biome: "Nether", href: "#" },
     { name: "Metrics Dashboard", desc: "Data visualization suite mapping complex user events.", biome: "Ocean", href: "#" },
     { name: "Trail Fitness App", desc: "Offline-first mobile tracker with GraphQL.", biome: "Mountains", href: "#" },
+];
+
+const ROADMAP = [
+    { year: "2025", event: "Spawned in University. Started Bachelor of Computer Applications (BCA) at Manipal University Jaipur." },
+    { year: "2026", event: "First Major Project Crafted. Built a Kotlin mobile application in Android Studio." },
+    { year: "Present", event: "Exploring New Stacks. Learning frameworks and system metrics." }
 ];
 
 /* ----------------------------- 3D COMPONENTS ----------------------------- */
@@ -61,54 +80,7 @@ const blockMats = {
     diamond: createBlockMats("#6fd1d9", "#6fd1d9")
 };
 
-function Block({ position, type = "grass", scale = [1, 1, 1] }) {
-    const isFullSize = scale[0] === 1 && scale[1] === 1 && scale[2] === 1;
-    const geo = isFullSize ? blockGeo : blockGeoSmall;
-    const mats = blockMats[type] || blockMats.grass;
 
-    return (
-        <mesh position={position} receiveShadow castShadow geometry={geo} material={mats}>
-            {isFullSize && (
-                <Edges scale={1} threshold={15} color="#111" />
-            )}
-        </mesh>
-    );
-}
-
-// A detailed tree with smaller, scattered leaf blocks
-function Tree({ position, scale = 1 }) {
-    const leaves = useMemo(() => {
-        const l = [];
-        for (let x = -1.2; x <= 1.2; x += 0.4) {
-            for (let y = 2.2; y <= 4.2; y += 0.4) {
-                for (let z = -1.2; z <= 1.2; z += 0.4) {
-                    const distSq = x*x + (y-3.2)*(y-3.2)*0.8 + z*z;
-                    if (distSq <= 1.6 && Math.random() > 0.2) {
-                        l.push(
-                            <Block 
-                                key={`l_${x}_${y}_${z}`} 
-                                position={[x, y, z]} 
-                                type="leaves" 
-                                scale={[0.4, 0.4, 0.4]} 
-                            />
-                        );
-                    }
-                }
-            }
-        }
-        return l;
-    }, []);
-
-    return (
-        <group position={position} scale={[scale, scale, scale]}>
-            <Block position={[0, 0, 0]} type="wood" />
-            <Block position={[0, 1, 0]} type="wood" />
-            <Block position={[0, 2, 0]} type="wood" />
-            <Block position={[0, 3, 0]} type="wood" />
-            {leaves}
-        </group>
-    );
-}
 
 // Reusable geometries and materials for House
 const houseBaseGeo = new THREE.BoxGeometry(3, 2, 3);
@@ -140,68 +112,160 @@ function House({ position, rotation = [0, 0, 0] }) {
     );
 }
 
-function InstancedTerrain({ positions, geo, mats }) {
+function InstancedTerrain({ instances, geo, mats }) {
     const meshRef = useRef();
-    
+
     useEffect(() => {
         if (!meshRef.current) return;
         const dummy = new THREE.Object3D();
-        positions.forEach((pos, i) => {
-            dummy.position.set(pos[0], pos[1], pos[2]);
+        instances.forEach((inst, i) => {
+            dummy.position.set(inst.pos[0], inst.pos[1], inst.pos[2]);
+            if (inst.scale) dummy.scale.set(inst.scale[0], inst.scale[1], inst.scale[2]);
+            else dummy.scale.set(1, 1, 1);
             dummy.updateMatrix();
             meshRef.current.setMatrixAt(i, dummy.matrix);
         });
         meshRef.current.instanceMatrix.needsUpdate = true;
-    }, [positions]);
+    }, [instances]);
 
     return (
-        <instancedMesh ref={meshRef} args={[geo, mats, positions.length]} receiveShadow castShadow />
+        <instancedMesh ref={meshRef} args={[geo, mats, instances.length]} receiveShadow castShadow />
     );
 }
 
 function getTerrainHeight(x, z) {
-    const distFromCenter = Math.sqrt(x*x + z*z);
+    const distFromCenter = Math.sqrt(x * x + z * z);
     if (distFromCenter < 12) return -0.5; // Keep village center flat
 
     let y = Math.sin(x * 0.1) * Math.cos(z * 0.1) * 4;
     y += Math.sin(x * 0.05 + z * 0.08) * 3;
-    
+
     const blend = Math.min(1, (distFromCenter - 12) / 10);
-    return Math.floor(y * blend) - 0.5; 
+    return Math.floor(y * blend) - 0.5;
+}
+
+
+function Clouds() {
+    const meshRef = useRef();
+    const cloudGeo = useMemo(() => new THREE.BoxGeometry(4, 1, 4), []);
+    const cloudMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#ffffff", transparent: true, opacity: 0.85 }), []);
+    
+    const clouds = useMemo(() => {
+        const arr = [];
+        for (let i = 0; i < 25; i++) {
+            arr.push({
+                x: (Math.random() - 0.5) * 120,
+                y: 12 + Math.random() * 8,
+                z: (Math.random() - 0.5) * 120,
+                scale: 0.8 + Math.random() * 1.5
+            });
+        }
+        return arr;
+    }, []);
+
+    useFrame((state, delta) => {
+        if (!meshRef.current) return;
+        const dummy = new THREE.Object3D();
+        
+        clouds.forEach((c, i) => {
+            c.x += delta * 0.8;
+            if (c.x > 60) c.x -= 120;
+            
+            dummy.position.set(c.x, c.y, c.z);
+            dummy.scale.set(c.scale, 1, c.scale * 1.5);
+            dummy.updateMatrix();
+            meshRef.current.setMatrixAt(i, dummy.matrix);
+        });
+        meshRef.current.instanceMatrix.needsUpdate = true;
+    });
+
+    return (
+        <instancedMesh ref={meshRef} args={[cloudGeo, cloudMat, 25]} />
+    );
+}
+
+function WorldBorder() {
+    const borderGeo = new THREE.PlaneGeometry(62, 40);
+    const borderMat = new THREE.MeshBasicMaterial({
+        color: "#44aaff",
+        transparent: true,
+        opacity: 0.15,
+        side: THREE.DoubleSide
+    });
+
+    return (
+        <group>
+            {/* Grid overlay to look like Minecraft barrier/border */}
+            <mesh position={[0, 10, -31]} geometry={borderGeo} material={borderMat}>
+                <Edges color="#88ccff" threshold={1} />
+            </mesh>
+            <mesh position={[0, 10, 31]} rotation={[0, Math.PI, 0]} geometry={borderGeo} material={borderMat}>
+                <Edges color="#88ccff" threshold={1} />
+            </mesh>
+            <mesh position={[-31, 10, 0]} rotation={[0, Math.PI / 2, 0]} geometry={borderGeo} material={borderMat}>
+                <Edges color="#88ccff" threshold={1} />
+            </mesh>
+            <mesh position={[31, 10, 0]} rotation={[0, -Math.PI / 2, 0]} geometry={borderGeo} material={borderMat}>
+                <Edges color="#88ccff" threshold={1} />
+            </mesh>
+        </group>
+    );
 }
 
 // World Terrain Generation
 function World() {
     const terrainData = useMemo(() => {
         const size = 30; // 61x61 grid (3700+ blocks)
-        const blocksByType = { grass: [], path: [], stone: [], dirt: [] };
-        const trees = [];
-        
+        const blocksByType = { grass: [], path: [], stone: [], dirt: [], wood: [], leaves: [] };
+
         for (let x = -size; x <= size; x++) {
             for (let z = -size; z <= size; z++) {
                 const y = getTerrainHeight(x, z);
-                
+
                 const isPath = (Math.abs(x) <= 1 || Math.abs(z) <= 1) && Math.abs(x) < 8 && Math.abs(z) < 8;
                 let type = "grass";
-                
+
                 if (isPath) type = "path";
                 else if (y > 2) type = "stone";
-                
-                blocksByType[type].push([x, y, z]);
-                
+
+                blocksByType[type].push({ pos: [x, y, z] });
+
                 // Add dirt underneath surface blocks to prevent gaps when hills rise
                 if (y > -0.5 && type !== "path") {
                     for (let dy = y - 1; dy >= -0.5; dy--) {
-                        blocksByType["dirt"].push([x, dy, z]);
+                        blocksByType["dirt"].push({ pos: [x, dy, z] });
                     }
                 }
-                
+
                 if (type === "grass" && Math.random() > 0.98 && Math.abs(x) > 4 && Math.abs(z) > 4) {
-                    trees.push({ pos: [x, y + 1, z], scale: 0.6 + Math.random() * 0.6 });
+                    const s = 0.6 + Math.random() * 0.6;
+                    
+                    // To perfectly sit on the block below (which has top at y + 0.5), 
+                    // the center of the first scaled block (size s) must be at y + 0.5 + s/2
+                    const baseY = y + 0.5 + s / 2;
+                    
+                    blocksByType["wood"].push({ pos: [x, baseY + 0 * s, z], scale: [s, s, s] });
+                    blocksByType["wood"].push({ pos: [x, baseY + 1 * s, z], scale: [s, s, s] });
+                    blocksByType["wood"].push({ pos: [x, baseY + 2 * s, z], scale: [s, s, s] });
+                    blocksByType["wood"].push({ pos: [x, baseY + 3 * s, z], scale: [s, s, s] });
+                    
+                    for (let lx = -1.2; lx <= 1.2; lx += 0.4) {
+                        for (let ly = 2.2; ly <= 4.2; ly += 0.4) {
+                            for (let lz = -1.2; lz <= 1.2; lz += 0.4) {
+                                const distSq = lx * lx + (ly - 3.2) * (ly - 3.2) * 0.8 + lz * lz;
+                                if (distSq <= 1.6 && Math.random() > 0.1) {
+                                    blocksByType["leaves"].push({
+                                        pos: [x + lx * s, baseY + ly * s, z + lz * s],
+                                        scale: [0.4 * s, 0.4 * s, 0.4 * s]
+                                    });
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
-        return { blocksByType, trees };
+        return { blocksByType };
     }, []);
 
     return (
@@ -211,25 +275,23 @@ function World() {
                 <planeGeometry args={[1000, 1000]} />
                 <meshStandardMaterial color="#5d9c4b" />
             </mesh>
-            
-            {Object.entries(terrainData.blocksByType).map(([type, positions]) => (
-                positions.length > 0 && (
-                    <InstancedTerrain 
-                        key={type} 
-                        positions={positions} 
-                        geo={blockGeo} 
-                        mats={blockMats[type] || blockMats.grass} 
+
+            {Object.entries(terrainData.blocksByType).map(([type, instances]) => (
+                instances.length > 0 && (
+                    <InstancedTerrain
+                        key={type}
+                        instances={instances}
+                        geo={type === "leaves" ? blockGeoSmall : blockGeo}
+                        mats={blockMats[type] || blockMats.grass}
                     />
                 )
             ))}
-            
-            {terrainData.trees.map((t, i) => (
-                <Tree key={`tree_${i}`} position={t.pos} scale={t.scale} />
-            ))}
-            
+
             <House position={[-6, 0, -9]} rotation={[0, 0, 0]} />
             <House position={[9, 0, 6]} rotation={[0, -Math.PI / 2, 0]} />
             <House position={[-6, 0, 9]} rotation={[0, Math.PI, 0]} />
+
+            <WorldBorder />
         </group>
     );
 }
@@ -250,16 +312,16 @@ function Villager({ position, roleColor = "#5c4033", facing = 0 }) {
     useFrame(({ camera }) => {
         if (!groupRef.current) return;
         const dist = camera.position.distanceTo(groupRef.current.position);
-        
+
         if (dist < 15) {
             // Store current rotation
             const currentY = groupRef.current.rotation.y;
             // Look at camera
             groupRef.current.lookAt(camera.position.x, groupRef.current.position.y, camera.position.z);
             let targetY = groupRef.current.rotation.y;
-            
+
             // Fix lookAt rotation wrapping issues
-            groupRef.current.rotation.y = currentY; 
+            groupRef.current.rotation.y = currentY;
             // Lerp to target
             groupRef.current.rotation.y = THREE.MathUtils.lerp(currentY, targetY, 0.1);
         } else {
@@ -296,7 +358,7 @@ function Scene({ activeSection, setActiveSection }) {
 
     useEffect(() => {
         if (!controlsRef.current) return;
-        
+
         const targetNPC = NPCS.find(n => n.id === activeSection);
         if (targetNPC) {
             const [tx, ty, tz] = targetNPC.pos;
@@ -313,15 +375,15 @@ function Scene({ activeSection, setActiveSection }) {
 
     return (
         <>
-            <color attach="background" args={['#87CEEB']} />
-            <fog attach="fog" args={['#87CEEB', 15, 45]} />
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[15, 20, 10]} intensity={1.5} castShadow />
-            <Sky sunPosition={[100, 20, 100]} turbidity={0.1} rayleigh={0.5} />
+            <color attach="background" args={['#ff9e7f']} />
+            <fog attach="fog" args={['#ffb499', 15, 45]} />
+            <ambientLight intensity={0.4} color="#ffe4d6" />
+            <directionalLight position={[50, 10, 50]} intensity={1.2} color="#ffd1b3" castShadow shadow-mapSize={[512, 512]} />
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-            
+
             <World />
-            
+            <Clouds />
+
             {/* 1. Home Villager (Guide) */}
             <group
                 onClick={(e) => { e.stopPropagation(); setActiveSection(1); }}
@@ -334,7 +396,7 @@ function Scene({ activeSection, setActiveSection }) {
                         <h3>{PROFILE.name}</h3>
                         <p>{PROFILE.role}</p>
                         <p><em>"{PROFILE.tagline}"</em></p>
-                        <p><strong>Think you can stump me? I dare you to test my skills.</strong></p>
+                        <p><strong>Think you can stump me? Use the Redstone (slot 5) to craft me a message!</strong></p>
                         <a href={`mailto:${PROFILE.email}`} className="wp-btn wp-hire-btn">Hire & Test Me</a>
                     </div>
                 </Html>
@@ -349,12 +411,17 @@ function Scene({ activeSection, setActiveSection }) {
                 <Villager position={NPCS[1].pos} roleColor={NPCS[1].roleColor} facing={NPCS[1].facing} />
                 <Html position={[NPCS[1].pos[0], NPCS[1].pos[1] + 3, NPCS[1].pos[2]]} center distanceFactor={10} style={{ opacity: activeSection === 2 ? 1 : 0.2, transition: 'opacity 0.3s' }}>
                     <div className="villager-dialog about-dialog">
-                        <h3>The Librarian says:</h3>
+                        <h3>The Farmer says:</h3>
                         <p>{ABOUT.bio}</p>
+                        <div className="wp-hobbies">
+                            <strong>Hobbies:</strong>
+                            <ul>
+                                {ABOUT.hobbies.map((h, i) => <li key={i}>{h}</li>)}
+                            </ul>
+                        </div>
                         <div className="wp-socials">
                             <a href={ABOUT.github} target="_blank" rel="noreferrer">GitHub</a>
                             <a href={ABOUT.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
-                            <a href={`mailto:${PROFILE.email}`}>Email</a>
                         </div>
                     </div>
                 </Html>
@@ -369,9 +436,17 @@ function Scene({ activeSection, setActiveSection }) {
                 <Villager position={NPCS[2].pos} roleColor={NPCS[2].roleColor} facing={NPCS[2].facing} />
                 <Html position={[NPCS[2].pos[0], NPCS[2].pos[1] + 3, NPCS[2].pos[2]]} center distanceFactor={10} style={{ opacity: activeSection === 3 ? 1 : 0.2, transition: 'opacity 0.3s' }}>
                     <div className="villager-dialog projects-dialog">
-                        <h3>The Blacksmith says:</h3>
-                        <p>"Take a look at the weapons and tools I've forged!"</p>
-                        <a href={PROFILE.github} target="_blank" rel="noreferrer" className="wp-btn wp-github-btn">View My GitHub Works</a>
+                        <h3>The Cartographer says:</h3>
+                        <p>"Here is the map of my journey so far..."</p>
+                        <div className="roadmap-map">
+                            {ROADMAP.map((r, i) => (
+                                <div key={i} className="roadmap-item">
+                                    <span className="rm-year">{r.year}</span>
+                                    <span className="rm-event">{r.event}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <a href={PROFILE.github} target="_blank" rel="noreferrer" className="wp-btn wp-github-btn">View GitHub</a>
                     </div>
                 </Html>
             </group>
@@ -385,14 +460,21 @@ function Scene({ activeSection, setActiveSection }) {
                 <Villager position={NPCS[3].pos} roleColor={NPCS[3].roleColor} facing={NPCS[3].facing} />
                 <Html position={[NPCS[3].pos[0], NPCS[3].pos[1] + 3, NPCS[3].pos[2]]} center distanceFactor={10} style={{ opacity: activeSection === 4 ? 1 : 0.2, transition: 'opacity 0.3s' }}>
                     <div className="villager-dialog skills-dialog">
-                        <h3>The Cleric says:</h3>
-                        <p>"Here is my knowledge base..."</p>
-                        <div className="wp-skills-grid">
+                        <h3>The Enchanter says:</h3>
+                        <p>"My magical proficiencies..."</p>
+                        <div className="wp-xp-grid">
                             {SKILLS.map((s) => (
-                                <div key={s.name} className="wp-skill-slot">{s.name}</div>
+                                <div key={s.name} className="xp-bar-container">
+                                    <div className="xp-bar-label">{s.name}</div>
+                                    <div className="xp-bar-bg">
+                                        <div className="xp-bar-fill" style={{ width: `${s.level * 3.3}%` }}></div>
+                                    </div>
+                                    <div className="xp-level">{s.level}</div>
+                                </div>
                             ))}
                         </div>
                     </div>
+
                 </Html>
             </group>
 
@@ -402,6 +484,81 @@ function Scene({ activeSection, setActiveSection }) {
 }
 
 /* --------------------------- MAIN UI COMPONENT --------------------------- */
+
+function TraditionalView() {
+    return (
+        <div className="traditional-view">
+            <header className="trad-header">
+                <div className="trad-header-content">
+                    <div className="trad-title-group">
+                        <h1>{PROFILE.name}</h1>
+                        <h2>{PROFILE.role}</h2>
+                        <p>{PROFILE.tagline}</p>
+                    </div>
+                    <div className="trad-links">
+                        <a href={ABOUT.github} target="_blank" rel="noreferrer">GitHub</a>
+                        <a href={ABOUT.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+                        <a href={`mailto:${PROFILE.email}`}>Email</a>
+                        <a href="#" className="trad-download-btn">Download PDF</a>
+                    </div>
+                </div>
+            </header>
+
+            <main className="trad-main">
+                <section className="trad-section">
+                    <h3>About Me</h3>
+                    <p>{ABOUT.bio}</p>
+                    <div className="trad-hobbies">
+                        <strong>Hobbies: </strong> {ABOUT.hobbies.join(', ')}
+                    </div>
+                </section>
+
+                <section className="trad-section">
+                    <h3>Experience Roadmap</h3>
+                    <ul className="trad-timeline">
+                        {ROADMAP.map((r, i) => (
+                            <li key={i}>
+                                <strong>{r.year}</strong> - {r.event}
+                            </li>
+                        ))}
+                    </ul>
+                </section>
+
+                <section className="trad-section">
+                    <h3>Key Projects</h3>
+                    <div className="trad-projects">
+                        {PROJECTS.map((p, i) => (
+                            <div key={i} className="trad-project-card">
+                                <h4>{p.name}</h4>
+                                <p>{p.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="trad-section">
+                    <h3>Skills</h3>
+                    <div className="trad-skills">
+                        {SKILLS.map((s, i) => (
+                            <span key={i} className="trad-skill-tag">{s.name}</span>
+                        ))}
+                    </div>
+                </section>
+
+                <section className="trad-section">
+                    <h3>Contact</h3>
+                    <form className="trad-contact-form" onSubmit={(e) => { e.preventDefault(); alert('Message sent!'); }}>
+                        <input type="text" placeholder="Name" required />
+                        <input type="email" placeholder="Email" required />
+                        <textarea placeholder="Message" required rows="4"></textarea>
+                        <button type="submit">Send Message</button>
+                    </form>
+                </section>
+            </main>
+        </div>
+    );
+}
+
 
 // Play a retro "pop" sound using AudioContext
 const playClickSound = () => {
@@ -426,49 +583,204 @@ const playClickSound = () => {
 };
 
 export default function MinecraftPortfolio() {
+    const [isTraditional, setIsTraditional] = useState(false);
+    const [isFocused, setIsFocused] = useState(true);
+
+    useEffect(() => {
+        const onFocus = () => setIsFocused(true);
+        const onBlur = () => setIsFocused(false);
+        window.addEventListener('focus', onFocus);
+        window.addEventListener('blur', onBlur);
+        return () => {
+            window.removeEventListener('focus', onFocus);
+            window.removeEventListener('blur', onBlur);
+        };
+    }, []);
     const [activeSlot, setActiveSlot] = useState(1);
+    const [isNether, setIsNether] = useState(false);
+    const [visited, setVisited] = useState(new Set([1]));
+    const [achievementUnlocked, setAchievementUnlocked] = useState(false);
+    const [showAchievement, setShowAchievement] = useState(false);
+
+    // Contact form state
+    const [contactForm, setContactForm] = useState({ name: '', email: '', msg: '' });
+    const [craftedItem, setCraftedItem] = useState(null);
+
+    // Simulated multiplayer count
+    const [visitorCount, setVisitorCount] = useState(1);
+
+    useEffect(() => {
+        let count = 0;
+        if (Math.random() < 0.98) {
+            count = Math.floor(Math.random() * 5) + 1;
+        } else {
+            count = Math.floor(Math.random() * 21) + 10;
+        }
+        setVisitorCount(count);
+    }, []);
+
+    const handleSlotClick = (slot) => {
+        playClickSound();
+        setActiveSlot(slot);
+
+        if (slot <= 4) {
+            setVisited(prev => {
+                const newVisited = new Set(prev);
+                newVisited.add(slot);
+                if (newVisited.size === 4 && !achievementUnlocked) {
+                    setAchievementUnlocked(true);
+                    setShowAchievement(true);
+                    setTimeout(() => setShowAchievement(false), 5000);
+                }
+                return newVisited;
+            });
+        }
+    };
+
+    const handleCraft = () => {
+        if (contactForm.name && contactForm.email && contactForm.msg) {
+            playClickSound();
+            setCraftedItem('Message Sent!');
+            setTimeout(() => {
+                setContactForm({ name: '', email: '', msg: '' });
+                setCraftedItem(null);
+                setActiveSlot(1);
+            }, 2000);
+        }
+    };
+
+    if (isTraditional) {
+        return (
+            <div className="wp-root">
+                <style>{CSS}</style>
+                <button className="trad-toggle-btn" onClick={() => { playClickSound(); setIsTraditional(false); }}>
+                    Return to 3D World
+                </button>
+                <TraditionalView />
+            </div>
+        );
+    }
 
     return (
         <div className="wp-root">
             <style>{CSS}</style>
-            
+            <button className="trad-toggle-btn" onClick={() => { playClickSound(); setIsTraditional(true); }}>
+                View Traditional Resume
+            </button>
+
             <div className="canvas-container">
-                <Canvas shadows dpr={[1, 1.5]} camera={{ position: [0, 5, 5], fov: 55 }}>
-                    <Suspense fallback={null}>
-                        <Scene activeSection={activeSlot} setActiveSection={setActiveSlot} />
+                <Canvas
+                    shadows
+                    dpr={[1, 1.5]}
+                    camera={{ position: [0, 5, 5], fov: 55 }}
+                    frameloop={isFocused ? 'always' : 'demand'}
+                    gl={{ powerPreference: "high-performance", antialias: false, stencil: false, depth: true }}
+                >
+                    <Suspense fallback={<LoadingScreen />}>
+                        <Scene activeSection={activeSlot} setActiveSection={handleSlotClick} isNether={isNether} setIsNether={setIsNether} />
                     </Suspense>
                 </Canvas>
                 <div className="crosshair">+</div>
             </div>
 
+            <div className="minimap">
+                <div className="minimap-bg">
+                    {[
+                        { id: 1, pos: [0, -2], color: '#5c4033', name: 'Guide' },
+                        { id: 2, pos: [-6, -6], color: '#c2b280', name: 'Farmer' },
+                        { id: 3, pos: [6, 6], color: '#d2b48c', name: 'Cartographer' },
+                        { id: 4, pos: [-6, 6], color: '#4b0082', name: 'Enchanter' }
+                    ].map(npc => {
+                        const left = ((npc.pos[0] + 10) / 20) * 100;
+                        const top = ((npc.pos[1] + 10) / 20) * 100;
+                        return (
+                            <div
+                                key={npc.id}
+                                className={activeSlot === npc.id ? "minimap-dot active" : "minimap-dot"}
+                                style={{ left: `${left}%`, top: `${top}%`, backgroundColor: npc.color }}
+                                onClick={() => handleSlotClick(npc.id)}
+                                title={npc.name}
+                            ></div>
+                        );
+                    })}
+                </div>
+                <div className="minimap-title">Minimap</div>
+            </div>
+
             <div className="wp-hud">
                 <div>Minecraft Portfolio v3.0.0</div>
                 <div style={{ marginTop: 10, color: '#e0b23c' }}>Click & Drag to Orbit Freely</div>
-                <div style={{ color: '#e0b23c' }}>Use Hotbar to Visit Villagers</div>
+                <div style={{ color: '#e0b23c' }}>Use Hotbar to Visit Sections</div>
+                <div style={{ marginTop: 10, color: '#45ff33', fontSize: '9px' }}>
+                    🟢 {visitorCount} other player{visitorCount !== 1 ? 's are' : ' is'} exploring this world
+                </div>
             </div>
+
+            {showAchievement && (
+                <div className="achievement-toast">
+                    <div className="ach-icon">🏆</div>
+                    <div className="ach-text">
+                        <div className="ach-title">Achievement Get!</div>
+                        <div className="ach-desc">Portfolio Explorer — Visited every villager</div>
+                    </div>
+                </div>
+            )}
+
+            {activeSlot === 5 && (
+                <div className="overlay-menu crafting-overlay">
+                    <h3>Crafting</h3>
+                    <div className="crafting-container">
+                        <div className="crafting-grid">
+                            <div className="craft-slot"><input placeholder="Name (Iron)" value={contactForm.name} onChange={e => setContactForm({ ...contactForm, name: e.target.value })} /></div>
+                            <div className="craft-slot"><input placeholder="Email (Redstone)" value={contactForm.email} onChange={e => setContactForm({ ...contactForm, email: e.target.value })} /></div>
+                            <div className="craft-slot"><textarea placeholder="Message (Paper)" value={contactForm.msg} onChange={e => setContactForm({ ...contactForm, msg: e.target.value })}></textarea></div>
+                            <div className="craft-slot empty"></div>
+                        </div>
+                        <div className="craft-arrow">➔</div>
+                        <div className="craft-result" onClick={handleCraft}>
+                            {craftedItem ? <div className="crafted-item">{craftedItem}</div> : <button>Craft!</button>}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {activeSlot === 6 && (
+                <div className="overlay-menu book-overlay">
+                    <div className="book-pages">
+                        <div className="book-page">
+                            <h3>Resume</h3>
+                            <p>{PROFILE.name}</p>
+                            <p>{PROFILE.role}</p>
+                            <p>{PROFILE.email}</p>
+                            <br />
+                            <p><strong>Experience</strong></p>
+                            <ul>
+                                <li>Master of full-stack realms.</li>
+                                <li>Redstone (Backend) Engineer.</li>
+                                <li>Frontend Architect.</li>
+                            </ul>
+                            <a href="#" className="wp-btn wp-hire-btn">Download PDF</a>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <nav className="hotbar-nav">
                 <div className="hotbar-inner">
-                    <button className={activeSlot === 1 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => { playClickSound(); setActiveSlot(1); }}>
-                        <span className="slot-num">1</span>
-                        <div className="slot-icon">🏠</div>
-                        <span className="slot-label">Guide</span>
-                    </button>
-                    <button className={activeSlot === 2 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => { playClickSound(); setActiveSlot(2); }}>
-                        <span className="slot-num">2</span>
-                        <div className="slot-icon">📖</div>
-                        <span className="slot-label">Librarian</span>
-                    </button>
-                    <button className={activeSlot === 3 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => { playClickSound(); setActiveSlot(3); }}>
-                        <span className="slot-num">3</span>
-                        <div className="slot-icon">⚒️</div>
-                        <span className="slot-label">Blacksmith</span>
-                    </button>
-                    <button className={activeSlot === 4 ? "hotbar-slot active" : "hotbar-slot"} onClick={() => { playClickSound(); setActiveSlot(4); }}>
-                        <span className="slot-num">4</span>
-                        <div className="slot-icon">✨</div>
-                        <span className="slot-label">Cleric</span>
-                    </button>
+                    {[
+                        { id: 1, icon: '🏠', label: 'Guide' },
+                        { id: 2, icon: '🌾', label: 'Farmer' },
+                        { id: 3, icon: '🗺️', label: 'Cartographer' },
+                        { id: 4, icon: '✨', label: 'Enchanter' },
+                        { id: 5, icon: '🔴', label: 'Contact' },
+                        { id: 6, icon: '📘', label: 'Resume' }
+                    ].map(slot => (
+                        <button key={slot.id} className={activeSlot === slot.id ? "hotbar-slot active" : "hotbar-slot"} onClick={() => handleSlotClick(slot.id)}>
+                            <span className="slot-num">{slot.id}</span>
+                            <div className="slot-icon">{slot.icon}</div>
+                            <span className="slot-label">{slot.label}</span>
+                        </button>
+                    ))}
                 </div>
             </nav>
         </div>
@@ -591,6 +903,229 @@ body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 }
 .hotbar-slot:hover .slot-label, .hotbar-slot.active .slot-label { opacity: 1; }
 .slot-icon { font-size: 22px; }
+
+
+/* Hobbies */
+.wp-hobbies { margin-bottom: 15px; font-size: 12px; }
+.wp-hobbies ul { padding-left: 20px; margin: 5px 0; }
+.wp-hobbies li { margin-bottom: 4px; }
+
+/* Roadmap (Cartographer) */
+.roadmap-map { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #ebdcb1; padding: 10px; border: 2px solid #8B5A2B; }
+.roadmap-item { display: flex; gap: 10px; align-items: flex-start; }
+.rm-year { font-weight: bold; font-family: 'JetBrains Mono', monospace; color: #5c4033; font-size: 12px; }
+.rm-event { font-size: 12px; color: #222; }
+
+/* XP Grid (Enchanter) */
+.wp-xp-grid { display: flex; flex-direction: column; gap: 10px; }
+.xp-bar-container { display: flex; align-items: center; gap: 10px; }
+.xp-bar-label { width: 80px; font-size: 10px; font-weight: bold; color: #333; }
+.xp-bar-bg { flex-grow: 1; height: 10px; background: #222; border: 2px solid #000; position: relative; }
+.xp-bar-fill { height: 100%; background: #45ff33; transition: width 0.5s ease-in-out; }
+.xp-level { font-family: 'Press Start 2P', monospace; font-size: 10px; color: #45ff33; text-shadow: 1px 1px 0 #000; width: 20px; text-align: right; }
+
+/* Overlays */
+.overlay-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 100; pointer-events: auto; }
+.crafting-overlay { background: #c6c6c6; border: 4px solid; border-color: #ffffff #555555 #555555 #ffffff; padding: 20px; width: 350px; box-shadow: 8px 8px 0px rgba(0,0,0,0.5); }
+.crafting-overlay h3 { margin-top: 0; font-family: 'Press Start 2P', monospace; font-size: 14px; color: #333; }
+.crafting-container { display: flex; align-items: center; gap: 20px; }
+.crafting-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 150px; }
+.craft-slot { background: #8b8b8b; border: 2px solid; border-color: #373737 #ffffff #ffffff #373737; width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; }
+.craft-slot.empty { background: #666; }
+.craft-slot input, .craft-slot textarea { width: 90%; height: 90%; background: transparent; border: none; outline: none; font-family: 'Inter', sans-serif; font-size: 10px; color: #fff; resize: none; text-align: center; }
+.craft-arrow { font-size: 24px; color: #333; }
+.craft-result { background: #8b8b8b; border: 2px solid; border-color: #373737 #ffffff #ffffff #373737; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.craft-result button { background: none; border: none; font-family: 'Space Grotesk', sans-serif; font-weight: bold; cursor: pointer; font-size: 12px; }
+.crafted-item { font-size: 10px; font-weight: bold; color: #45ff33; text-align: center; }
+
+.book-overlay { background: #ebdcb1; border: 4px solid #8B5A2B; padding: 30px; width: 400px; box-shadow: 8px 8px 0px rgba(0,0,0,0.5); color: #333; }
+.book-overlay h3 { margin-top: 0; font-family: 'Press Start 2P', monospace; font-size: 16px; color: #333; }
+
+/* Achievement Toast */
+.achievement-toast { position: absolute; top: 20px; right: 20px; background: #212121; border: 2px solid #555; padding: 10px 15px; display: flex; align-items: center; gap: 15px; box-shadow: 4px 4px 0px rgba(0,0,0,0.5); z-index: 100; animation: slideIn 0.5s ease-out; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.ach-icon { font-size: 24px; }
+.ach-title { color: #ffff55; font-family: 'Press Start 2P', monospace; font-size: 10px; margin-bottom: 4px; }
+.ach-desc { color: #fff; font-size: 12px; }
+
+
+
+.perf-toggle-btn {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding: 8px 16px;
+  background: #222;
+  color: #45ff33;
+  border: 2px solid #45ff33;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.perf-toggle-btn:hover {
+  background: #45ff33;
+  color: #111;
+}
+
+/* Traditional View Toggle Button */
+.trad-toggle-btn {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  padding: 10px 20px;
+  background: #111;
+  color: #fff;
+  border: 2px solid #555;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.trad-toggle-btn:hover {
+  background: #fff;
+  color: #111;
+  border-color: #111;
+}
+
+/* Traditional View Layout */
+.traditional-view {
+  background: #fff;
+  color: #111;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  font-family: 'Inter', sans-serif;
+}
+.trad-header {
+  border-bottom: 1px solid #eaeaea;
+  padding: 60px 20px 40px;
+  background: #fafafa;
+}
+.trad-header-content {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.trad-title-group h1 { margin: 0 0 10px; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+.trad-title-group h2 { margin: 0 0 10px; font-size: 18px; font-weight: 500; color: #555; }
+.trad-title-group p { margin: 0; font-size: 14px; color: #777; max-width: 500px; line-height: 1.5; }
+.trad-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+.trad-links a {
+  color: #111;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+.trad-links a:hover { text-decoration: underline; }
+.trad-download-btn {
+  background: #111;
+  color: #fff !important;
+  padding: 8px 16px;
+  border-radius: 4px;
+}
+.trad-download-btn:hover { background: #333; text-decoration: none !important; }
+
+.trad-main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+}
+.trad-section h3 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #777;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+.trad-section p { font-size: 15px; line-height: 1.6; color: #333; margin: 0 0 15px; }
+.trad-hobbies { font-size: 14px; color: #555; }
+
+.trad-timeline { list-style: none; padding: 0; margin: 0; }
+.trad-timeline li {
+  margin-bottom: 15px;
+  font-size: 15px;
+  color: #333;
+}
+.trad-timeline strong { display: inline-block; width: 60px; color: #777; }
+
+.trad-projects { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.trad-project-card {
+  border: 1px solid #eaeaea;
+  padding: 20px;
+  border-radius: 4px;
+}
+.trad-project-card h4 { margin: 0 0 10px; font-size: 16px; }
+.trad-project-card p { margin: 0; font-size: 14px; color: #666; }
+
+.trad-skills { display: flex; flex-wrap: wrap; gap: 10px; }
+.trad-skill-tag {
+  background: #f5f5f5;
+  border: 1px solid #eaeaea;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 20px;
+  color: #333;
+}
+
+.trad-contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 400px;
+}
+.trad-contact-form input, .trad-contact-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #eaeaea;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+}
+.trad-contact-form button {
+  background: #111;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.trad-contact-form button:hover { background: #333; }
+
+@media (max-width: 600px) {
+  .trad-header-content { flex-direction: column; align-items: flex-start; }
+  .trad-projects { grid-template-columns: 1fr; }
+}
+
+/* Mobile Compatibility Fixes */
+@media (max-width: 600px) {
+  .crafting-overlay, .book-overlay { width: 90%; max-width: 320px; }
+}
 
 /* Mobile Compatibility */
 @media (max-width: 600px) {

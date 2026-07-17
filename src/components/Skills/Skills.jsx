@@ -1,6 +1,19 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { SiReact, SiNextdotjs, SiTypescript, SiTailwindcss, SiNodedotjs, SiMongodb, SiFigma } from 'react-icons/si';
+import ScrollReveal from '../ScrollReveal/ScrollReveal';
+import LogoLoop from '../LogoLoop/LogoLoop';
 import './Skills.css';
+
+const techLogos = [
+  { node: <SiReact />, title: "React", href: "https://react.dev" },
+  { node: <SiNextdotjs />, title: "Next.js", href: "https://nextjs.org" },
+  { node: <SiTypescript />, title: "TypeScript", href: "https://www.typescriptlang.org" },
+  { node: <SiTailwindcss />, title: "Tailwind CSS", href: "https://tailwindcss.com" },
+  { node: <SiNodedotjs />, title: "Node.js", href: "https://nodejs.org" },
+  { node: <SiMongodb />, title: "MongoDB", href: "https://www.mongodb.com" },
+  { node: <SiFigma />, title: "Figma", href: "https://www.figma.com" },
+];
 
 const skillsData = [
   {
@@ -63,8 +76,23 @@ const Skills = () => {
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.6 }}
       >
-        <h2 className="section-title">My Skills</h2>
+        <ScrollReveal textClassName="section-title">My Skills</ScrollReveal>
       </motion.div>
+
+      <div style={{ width: '100%', marginBottom: '4rem', overflow: 'hidden' }}>
+        <LogoLoop
+          logos={techLogos}
+          speed={120}
+          direction="left"
+          logoHeight={36}
+          gap={60}
+          hoverSpeed={0}
+          scaleOnHover
+          fadeOut
+          fadeOutColor="#120F17"
+          ariaLabel="Technology stack"
+        />
+      </div>
 
       <motion.div 
         className="skills-grid"
@@ -75,12 +103,14 @@ const Skills = () => {
       >
         {skillsData.map((categoryGroup) => (
           <motion.div key={categoryGroup.category} className="skill-category glass-panel" variants={itemVariants}>
-            <h3 className="category-title text-gradient">{categoryGroup.category}</h3>
+            <ScrollReveal textClassName="category-title text-gradient">
+              {categoryGroup.category}
+            </ScrollReveal>
             <div className="skills-list">
               {categoryGroup.skills.map(skill => (
                 <div key={skill.name} className="skill-item">
                   <div className="skill-info">
-                    <span className="skill-name">{skill.name}</span>
+                    <ScrollReveal textClassName="skill-name">{skill.name}</ScrollReveal>
                     <span className="skill-level">{skill.level}%</span>
                   </div>
                   <div className="skill-bar-container">
@@ -88,8 +118,8 @@ const Skills = () => {
                       className="skill-bar-fill"
                       initial={{ width: 0 }}
                       whileInView={{ width: `${skill.level}%` }}
-                      viewport={{ once: true, margin: "-100px" }}
-                      transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+                      viewport={{ once: false, margin: "-50px" }}
+                      transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
                     />
                   </div>
                 </div>

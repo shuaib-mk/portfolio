@@ -1,0 +1,11 @@
+.scroll-reveal {
+  margin: 0;
+}
+
+.scroll-reveal-text {
+  /* Removed forced font sizes to allow natural inheritance */
+}
+
+.word {
+  display: inline-block;
+}

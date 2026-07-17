@@ -10,16 +10,18 @@ function App() {
   return (
     <div className="app-container">
       <DotField
-        dotRadius={1.2}
-        dotSpacing={16}
-        cursorRadius={400}
-        bulgeStrength={85}
-        glowRadius={200}
-        sparkle={true}
-        waveAmplitude={0.8}
-        gradientFrom="rgba(99, 102, 241, 0.4)"
-        gradientTo="rgba(139, 92, 246, 0.2)"
-        glowColor="#1a1a2e"
+        dotRadius={2.5}
+        dotSpacing={14}
+        bulgeStrength={67}
+        glowRadius={160}
+        sparkle={false}
+        waveAmplitude={0}
+        cursorRadius={500}
+        cursorForce={0.1}
+        bulgeOnly
+        gradientFrom="rgba(255, 255, 255, 0.8)"
+        gradientTo="rgba(255, 255, 255, 0.4)"
+        glowColor="#120F17"
       />
       
       <div className="content-overlay">
