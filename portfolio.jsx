@@ -14,7 +14,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 
 const PROFILE = {
     name: "Alex Voss",
-    role: "Full-Stack Engineer",
+    role: "Full-Stack Developer",
     tagline:
         "I build reliable, well-lit software — the kind you can find your way around at night.",
     location: "Remote / UTC+5:30",
@@ -33,7 +33,7 @@ const ACHIEVEMENTS = [
     { title: "Shipped 20+ Projects", detail: "Production apps, not just demos" },
     { title: "Open Source Contributor", detail: "Merged PRs in 6 public repos" },
     { title: "Led a Team of 5", detail: "Shipped a platform rewrite on time" },
-    { title: "5 Years Played", detail: "Professional software engineering" },
+    { title: "5 Years Played", detail: "Professional software development" },
 ];
 
 const SKILL_TIERS = {
@@ -222,7 +222,7 @@ export default function MinecraftPortfolio() {
                 <div className="wp-about-grid">
                     <div className="wp-about-text">
                         <p>
-                            I'm a full-stack engineer who cares more about how software behaves at 2am
+                            I'm a full-stack developer who cares more about how software behaves at 2am
                             during an incident than how it looks in a demo. I've spent the last five
                             years building products end to end — from schema design to the pixel the
                             user actually taps.

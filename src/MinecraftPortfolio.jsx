@@ -18,14 +18,14 @@ function LoadingScreen() {
 /* ----------------------------- DATA ----------------------------- */
 const PROFILE = {
     name: "q04ti",
-    role: "Computer Application Student",
+    role: "Developer",
     tagline: "Passionate about building intuitive software, solving complex problems, and constantly learning new technologies.",
     email: "q04tiofficial@gmail.com",
     github: "https://github.com/q04ti"
 };
 
 const ABOUT = {
-    bio: "I'm a Computer Application Student who loves turning ideas into interactive experiences. Whether I'm building web applications, exploring new frameworks, or optimizing code, I'm always eager to take on new challenges and build things people love to use.",
+    bio: "I'm a Developer who loves turning ideas into interactive experiences. Whether I'm building web applications, exploring new frameworks, or optimizing code, I'm always eager to take on new challenges and build things people love to use.",
     github: "https://github.com/q04ti",
     linkedin: "https://linkedin.com/in/q04ti",
     hobbies: ["Building redstone logic", "Speedrunning algorithms", "Mining for tech stacks", "Home weightlifting"],
@@ -48,11 +48,7 @@ const PROJECTS = [
     { name: "Trail Fitness App", desc: "Offline-first mobile tracker with GraphQL.", biome: "Mountains", href: "#" },
 ];
 
-const ROADMAP = [
-    { year: "2025", event: "Spawned in University. Started Bachelor of Computer Applications (BCA) at Manipal University Jaipur." },
-    { year: "2026", event: "First Major Project Crafted. Built a Kotlin mobile application in Android Studio." },
-    { year: "Present", event: "Exploring New Stacks. Learning frameworks and system metrics." }
-];
+
 
 /* ----------------------------- 3D COMPONENTS ----------------------------- */
 
@@ -382,10 +378,11 @@ function Scene({ activeSection, setActiveSection }) {
             const [tx, ty, tz] = targetNPC.pos;
             // Fly the camera slightly in front and above the villager, looking at their face
             const angle = targetNPC.facing;
-            const distance = 4;
+            const isMobile = window.innerWidth < 768;
+            const distance = isMobile ? 12 : 8; // increased distance so it's less zoomed in
             const cx = tx + Math.sin(angle) * distance;
             const cz = tz + Math.cos(angle) * distance;
-            const cy = ty + 2.5;
+            const cy = ty + (isMobile ? 4.5 : 3.5);
 
             controlsRef.current.setLookAt(cx, cy, cz, tx, ty + 1.5, tz, true);
         }
@@ -394,7 +391,7 @@ function Scene({ activeSection, setActiveSection }) {
     return (
         <>
             <color attach="background" args={['#ff9e7f']} />
-            <fog attach="fog" args={['#ffb499', 15, 45]} />
+            <fog attach="fog" args={['#ffb499', 40, 100]} />
             <ambientLight intensity={0.4} color="#ffe4d6" />
             <directionalLight position={[50, 10, 50]} intensity={1.2} color="#ffd1b3" castShadow shadow-mapSize={[512, 512]} />
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
@@ -454,14 +451,14 @@ function Scene({ activeSection, setActiveSection }) {
                 <Villager position={NPCS[2].pos} roleColor={NPCS[2].roleColor} facing={NPCS[2].facing} />
                 <Html position={[NPCS[2].pos[0], NPCS[2].pos[1] + 3, NPCS[2].pos[2]]} center distanceFactor={10} style={{ opacity: activeSection === 3 ? 1 : 0.2, transition: 'opacity 0.3s' }}>
                     <div className="villager-dialog projects-dialog">
-                        <h3>The Cartographer says:</h3>
-                        <p>"Here is the map of my journey so far..."</p>
-                        <div className="roadmap-map">
-                            {ROADMAP.map((r, i) => (
-                                <div key={i} className="roadmap-item">
-                                    <span className="rm-year">{r.year}</span>
-                                    <span className="rm-event">{r.event}</span>
-                                </div>
+                        <h3>The Blacksmith says:</h3>
+                        <p>"Here are the finest tools I've forged..."</p>
+                        <div className="projects-grid">
+                            {PROJECTS.map((p, i) => (
+                                <a key={i} href={p.href} className="project-mini-card" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                                    <h4>{p.name}</h4>
+                                    <p>{p.desc}</p>
+                                </a>
                             ))}
                         </div>
                         <a href={PROFILE.github} target="_blank" rel="noreferrer" className="wp-btn wp-github-btn">View GitHub</a>
@@ -531,16 +528,7 @@ function TraditionalView() {
                     </div>
                 </section>
 
-                <section className="trad-section">
-                    <h3>Experience Roadmap</h3>
-                    <ul className="trad-timeline">
-                        {ROADMAP.map((r, i) => (
-                            <li key={i}>
-                                <strong>{r.year}</strong> - {r.event}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
+
 
                 <section className="trad-section">
                     <h3>Key Projects</h3>
@@ -774,10 +762,10 @@ export default function MinecraftPortfolio() {
                             <p><strong>Experience</strong></p>
                             <ul>
                                 <li>Master of full-stack realms.</li>
-                                <li>Redstone (Backend) Engineer.</li>
+                                <li>Redstone (Backend) Developer.</li>
                                 <li>Frontend Architect.</li>
                             </ul>
-                            <a href="#" className="wp-btn wp-hire-btn">Download PDF</a>
+                            <a href="/resume.pdf" download="Resume_q04ti.pdf" className="wp-btn wp-hire-btn">Download PDF</a>
                         </div>
                     </div>
                 </div>
@@ -928,11 +916,7 @@ body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 .wp-hobbies ul { padding-left: 20px; margin: 5px 0; }
 .wp-hobbies li { margin-bottom: 4px; }
 
-/* Roadmap (Cartographer) */
-.roadmap-map { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; background: #ebdcb1; padding: 10px; border: 2px solid #8B5A2B; }
-.roadmap-item { display: flex; gap: 10px; align-items: flex-start; }
-.rm-year { font-weight: bold; font-family: 'JetBrains Mono', monospace; color: #5c4033; font-size: 12px; }
-.rm-event { font-size: 12px; color: #222; }
+
 
 /* XP Grid (Enchanter) */
 .wp-xp-grid { display: flex; flex-direction: column; gap: 10px; }
