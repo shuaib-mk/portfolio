@@ -125,7 +125,7 @@ function InstancedTerrain({ instances, geo, mats }) {
     }, [instances]);
 
     return (
-        <instancedMesh ref={meshRef} args={[geo, mats, instances.length]} receiveShadow castShadow />
+        <instancedMesh ref={meshRef} args={[geo, mats, instances.length]} receiveShadow castShadow frustumCulled={false} />
     );
 }
 
@@ -176,7 +176,7 @@ function Clouds() {
     });
 
     return (
-        <instancedMesh ref={meshRef} args={[cloudGeo, cloudMat, 25]} />
+        <instancedMesh ref={meshRef} args={[cloudGeo, cloudMat, 25]} frustumCulled={false} />
     );
 }
 
