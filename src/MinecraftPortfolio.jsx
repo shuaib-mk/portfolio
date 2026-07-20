@@ -391,7 +391,7 @@ function Scene({ activeSection, setActiveSection }) {
     return (
         <>
             <color attach="background" args={['#ff9e7f']} />
-            <fog attach="fog" args={['#ffb499', 40, 100]} />
+            <fog attach="fog" args={['#ffb499', 150, 300]} />
             <ambientLight intensity={0.4} color="#ffe4d6" />
             <directionalLight position={[50, 10, 50]} intensity={1.2} color="#ffd1b3" castShadow shadow-mapSize={[512, 512]} />
             <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
