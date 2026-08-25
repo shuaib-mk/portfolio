@@ -17,7 +17,7 @@ function LoadingScreen() {
 
 /* ----------------------------- DATA ----------------------------- */
 const PROFILE = {
-    name: "q04ti",
+    name: "shuaib mk",
     role: "Developer",
     tagline: "Passionate about building intuitive software, solving complex problems, and constantly learning new technologies.",
     email: "q04tiofficial@gmail.com",
