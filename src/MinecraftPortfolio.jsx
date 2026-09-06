@@ -42,6 +42,7 @@ const SKILLS = [
 ];
 
 const PROJECTS = [
+    { name: "ForgeFlow", desc: "Developer workflow dashboard & durable task execution platform with real-time logging.", biome: "Forge", href: "https://forge-flow.up.railway.app/" },
     { name: "Marketplace Storefront", desc: "A headless e-commerce front end built with React and Stripe.", biome: "Plains", href: "#" },
     { name: "Realtime Ops Chat", desc: "Low-latency messaging layer using WebSockets and Redis.", biome: "Nether", href: "#" },
     { name: "Metrics Dashboard", desc: "Data visualization suite mapping complex user events.", biome: "Ocean", href: "#" },
@@ -534,10 +535,10 @@ function TraditionalView() {
                     <h3>Key Projects</h3>
                     <div className="trad-projects">
                         {PROJECTS.map((p, i) => (
-                            <div key={i} className="trad-project-card">
+                            <a key={i} href={p.href} target="_blank" rel="noreferrer" className="trad-project-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
                                 <h4>{p.name}</h4>
                                 <p>{p.desc}</p>
-                            </div>
+                            </a>
                         ))}
                     </div>
                 </section>

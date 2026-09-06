@@ -8,6 +8,16 @@ import './Projects.css';
 const projectData = [
   {
     id: 1,
+    title: 'ForgeFlow',
+    description: 'Local developer workflow dashboard & durable task execution platform featuring real-time log streaming, operational analytics, and plugin extensions.',
+    tags: ['React', 'TypeScript', 'Node.js', 'Railway'],
+    category: 'web',
+    image: '/forgeflow.jpg',
+    github: 'https://github.com/q04ti',
+    demo: 'https://forge-flow.up.railway.app/'
+  },
+  {
+    id: 2,
     title: 'E-Commerce Platform',
     description: 'A full-stack e-commerce solution with React, Node.js, and Stripe integration. Features real-time inventory and a custom CMS.',
     tags: ['React', 'Node.js', 'MongoDB', 'Stripe'],

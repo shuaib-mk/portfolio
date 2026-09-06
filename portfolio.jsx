@@ -58,6 +58,14 @@ const SKILLS = [
 const PROJECTS = [
     {
         coord: "0, 0",
+        biome: "Forge",
+        name: "ForgeFlow",
+        desc: "A developer workflow dashboard & durable execution platform featuring real-time log streaming, plugin extensions, and operational analytics.",
+        tags: ["React", "TypeScript", "Node.js", "Railway"],
+        href: "https://forge-flow.up.railway.app/",
+    },
+    {
+        coord: "1, 0",
         biome: "Plains",
         name: "Marketplace Storefront",
         desc: "A headless e-commerce front end with sub-second search and a custom checkout flow, built for a mid-size retailer.",
