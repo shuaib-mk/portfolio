@@ -8,6 +8,16 @@ import './Projects.css';
 const projectData = [
   {
     id: 1,
+    title: 'Sunni AI',
+    description: 'An intelligent AI assistant & conversational platform built for context-aware chat, rapid knowledge retrieval, and seamless natural language interactions.',
+    tags: ['React', 'TypeScript', 'Tailwind', 'AI API'],
+    category: 'web',
+    image: '/sunniai.jpg',
+    github: 'https://github.com/q04ti',
+    demo: 'https://sunniai.vercel.app/'
+  },
+  {
+    id: 2,
     title: 'ForgeFlow',
     description: 'Local developer workflow dashboard & durable task execution platform featuring real-time log streaming, operational analytics, and plugin extensions.',
     tags: ['React', 'TypeScript', 'Node.js', 'Railway'],

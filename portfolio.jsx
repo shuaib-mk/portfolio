@@ -58,6 +58,14 @@ const SKILLS = [
 const PROJECTS = [
     {
         coord: "0, 0",
+        biome: "Enchanted Grove",
+        name: "Sunni AI",
+        desc: "An intelligent conversational AI platform & workspace featuring context-aware reasoning, natural language interaction, and real-time knowledge retrieval.",
+        tags: ["React", "TypeScript", "Tailwind", "AI API", "Vercel"],
+        href: "https://sunniai.vercel.app/",
+    },
+    {
+        coord: "1, 0",
         biome: "Forge",
         name: "ForgeFlow",
         desc: "A developer workflow dashboard & durable execution platform featuring real-time log streaming, plugin extensions, and operational analytics.",
