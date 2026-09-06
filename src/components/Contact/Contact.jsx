@@ -25,25 +25,27 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      await fetch("https://formsubmit.co/ajax/q04tiofficial@gmail.com", {
+      const fd = new FormData();
+      fd.append("name", formData.name);
+      fd.append("email", formData.email);
+      fd.append("subject", formData.subject || `Portfolio Contact from ${formData.name}`);
+      fd.append("message", formData.message);
+      fd.append("_subject", `Portfolio Contact: ${formData.subject || formData.name}`);
+      fd.append("_captcha", "false");
+
+      const res = await fetch("https://formsubmit.co/q04tiofficial@gmail.com", {
         method: "POST",
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject || `Portfolio Contact from ${formData.name}`,
-          message: formData.message,
-          _subject: `Portfolio Contact: ${formData.subject || formData.name}`,
-          _captcha: "false"
-        })
+        body: fd
       });
-      setIsSubmitting(false);
-      setIsSuccess(true);
-      setFormData({ name: '', email: '', subject: '', message: '' });
-      setTimeout(() => setIsSuccess(false), 5000);
+
+      if (res.ok) {
+        setIsSubmitting(false);
+        setIsSuccess(true);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setIsSuccess(false), 5000);
+      } else {
+        throw new Error('Failed to send');
+      }
     } catch (error) {
       setIsSubmitting(false);
       window.location.href = `mailto:q04tiofficial@gmail.com?subject=${encodeURIComponent(formData.subject || 'Portfolio Inquiry')}&body=${encodeURIComponent(formData.message)}%0A%0AFrom:%20${encodeURIComponent(formData.email)}`;

@@ -370,22 +370,24 @@ export default function MinecraftPortfolio() {
                             const message = form.elements['message']?.value || '';
 
                             try {
-                                await fetch("https://formsubmit.co/ajax/q04tiofficial@gmail.com", {
+                                const fd = new FormData();
+                                fd.append("name", name);
+                                fd.append("email", email);
+                                fd.append("message", message);
+                                fd.append("_subject", `New Portfolio Message from ${name}`);
+                                fd.append("_captcha", "false");
+
+                                const res = await fetch("https://formsubmit.co/q04tiofficial@gmail.com", {
                                     method: "POST",
-                                    headers: { 
-                                        'Content-Type': 'application/json',
-                                        'Accept': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        name,
-                                        email,
-                                        message,
-                                        _subject: `New Portfolio Message from ${name}`,
-                                        _captcha: "false"
-                                    })
+                                    body: fd
                                 });
-                                alert('Message sent successfully!');
-                                form.reset();
+
+                                if (res.ok) {
+                                    alert('Message sent successfully!');
+                                    form.reset();
+                                } else {
+                                    throw new Error('Failed to send');
+                                }
                             } catch (err) {
                                 window.location.href = `mailto:${PROFILE.email}?subject=Portfolio%20Contact&body=${encodeURIComponent(message)}%0A%0AFrom:%20${encodeURIComponent(email)}`;
                             } finally {

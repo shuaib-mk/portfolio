@@ -567,22 +567,24 @@ function TraditionalView() {
                         const message = e.target.elements[2].value;
 
                         try {
-                            await fetch("https://formsubmit.co/ajax/q04tiofficial@gmail.com", {
+                            const formData = new FormData();
+                            formData.append("name", name);
+                            formData.append("email", email);
+                            formData.append("message", message);
+                            formData.append("_subject", `Portfolio Contact from ${name}`);
+                            formData.append("_captcha", "false");
+
+                            const res = await fetch("https://formsubmit.co/q04tiofficial@gmail.com", {
                                 method: "POST",
-                                headers: { 
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    name,
-                                    email,
-                                    message,
-                                    _subject: `Portfolio Contact from ${name}`,
-                                    _captcha: "false"
-                                })
+                                body: formData
                             });
-                            alert('Message sent successfully to q04tiofficial@gmail.com!');
-                            e.target.reset();
+
+                            if (res.ok) {
+                                alert('Message sent successfully!');
+                                e.target.reset();
+                            } else {
+                                throw new Error('Failed to send');
+                            }
                         } catch (err) {
                             window.location.href = `mailto:q04tiofficial@gmail.com?subject=Portfolio%20Contact%20from%20${encodeURIComponent(name)}&body=${encodeURIComponent(message)}%0A%0AFrom:%20${encodeURIComponent(email)}`;
                         } finally {
@@ -684,21 +686,23 @@ export default function MinecraftPortfolio() {
             playClickSound();
             setCraftedItem('Sending...');
             try {
-                await fetch("https://formsubmit.co/ajax/q04tiofficial@gmail.com", {
+                const formData = new FormData();
+                formData.append("name", contactForm.name);
+                formData.append("email", contactForm.email);
+                formData.append("message", contactForm.msg);
+                formData.append("_subject", `New Portfolio Message from ${contactForm.name}`);
+                formData.append("_captcha", "false");
+
+                const res = await fetch("https://formsubmit.co/q04tiofficial@gmail.com", {
                     method: "POST",
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: contactForm.name,
-                        email: contactForm.email,
-                        message: contactForm.msg,
-                        _subject: `New Portfolio Message from ${contactForm.name}`,
-                        _captcha: "false"
-                    })
+                    body: formData
                 });
-                setCraftedItem('Message Sent!');
+
+                if (res.ok) {
+                    setCraftedItem('Message Sent!');
+                } else {
+                    throw new Error('Failed to send');
+                }
             } catch (err) {
                 window.location.href = `mailto:q04tiofficial@gmail.com?subject=Portfolio%20Contact%20from%20${encodeURIComponent(contactForm.name)}&body=${encodeURIComponent(contactForm.msg)}%0A%0AFrom:%20${encodeURIComponent(contactForm.email)}`;
                 setCraftedItem('Message Sent!');
