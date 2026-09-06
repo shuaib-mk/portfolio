@@ -555,7 +555,41 @@ function TraditionalView() {
 
                 <section className="trad-section">
                     <h3>Contact</h3>
-                    <form className="trad-contact-form" onSubmit={(e) => { e.preventDefault(); alert('Message sent!'); }}>
+                    <form className="trad-contact-form" onSubmit={async (e) => {
+                        e.preventDefault();
+                        const btn = e.target.querySelector('button');
+                        const originalText = btn.innerText;
+                        btn.innerText = 'Sending...';
+                        btn.disabled = true;
+                        
+                        const name = e.target.elements[0].value;
+                        const email = e.target.elements[1].value;
+                        const message = e.target.elements[2].value;
+
+                        try {
+                            await fetch("https://formsubmit.co/ajax/q04tiofficial@gmail.com", {
+                                method: "POST",
+                                headers: { 
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    name,
+                                    email,
+                                    message,
+                                    _subject: `Portfolio Contact from ${name}`,
+                                    _captcha: "false"
+                                })
+                            });
+                            alert('Message sent successfully to q04tiofficial@gmail.com!');
+                            e.target.reset();
+                        } catch (err) {
+                            window.location.href = `mailto:q04tiofficial@gmail.com?subject=Portfolio%20Contact%20from%20${encodeURIComponent(name)}&body=${encodeURIComponent(message)}%0A%0AFrom:%20${encodeURIComponent(email)}`;
+                        } finally {
+                            btn.innerText = originalText;
+                            btn.disabled = false;
+                        }
+                    }}>
                         <input type="text" placeholder="Name" required />
                         <input type="email" placeholder="Email" required />
                         <textarea placeholder="Message" required rows="4"></textarea>
@@ -645,15 +679,36 @@ export default function MinecraftPortfolio() {
         }
     };
 
-    const handleCraft = () => {
+    const handleCraft = async () => {
         if (contactForm.name && contactForm.email && contactForm.msg) {
             playClickSound();
-            setCraftedItem('Message Sent!');
-            setTimeout(() => {
-                setContactForm({ name: '', email: '', msg: '' });
-                setCraftedItem(null);
-                setActiveSlot(1);
-            }, 2000);
+            setCraftedItem('Sending...');
+            try {
+                await fetch("https://formsubmit.co/ajax/q04tiofficial@gmail.com", {
+                    method: "POST",
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: contactForm.name,
+                        email: contactForm.email,
+                        message: contactForm.msg,
+                        _subject: `New Portfolio Message from ${contactForm.name}`,
+                        _captcha: "false"
+                    })
+                });
+                setCraftedItem('Message Sent!');
+            } catch (err) {
+                window.location.href = `mailto:q04tiofficial@gmail.com?subject=Portfolio%20Contact%20from%20${encodeURIComponent(contactForm.name)}&body=${encodeURIComponent(contactForm.msg)}%0A%0AFrom:%20${encodeURIComponent(contactForm.email)}`;
+                setCraftedItem('Message Sent!');
+            } finally {
+                setTimeout(() => {
+                    setContactForm({ name: '', email: '', msg: '' });
+                    setCraftedItem(null);
+                    setActiveSlot(1);
+                }, 2500);
+            }
         }
     };
 

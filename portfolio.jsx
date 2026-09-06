@@ -357,10 +357,41 @@ export default function MinecraftPortfolio() {
 
                     <form
                         className="wp-form"
-                        onSubmit={(e) => {
+                        onSubmit={async (e) => {
                             e.preventDefault();
-                            const mailto = `mailto:${PROFILE.email}`;
-                            window.location.href = mailto;
+                            const form = e.currentTarget;
+                            const btn = form.querySelector('button');
+                            const originalText = btn.innerText;
+                            btn.innerText = 'Sending...';
+                            btn.disabled = true;
+
+                            const name = form.elements['name']?.value || '';
+                            const email = form.elements['email']?.value || '';
+                            const message = form.elements['message']?.value || '';
+
+                            try {
+                                await fetch("https://formsubmit.co/ajax/q04tiofficial@gmail.com", {
+                                    method: "POST",
+                                    headers: { 
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        name,
+                                        email,
+                                        message,
+                                        _subject: `New Portfolio Message from ${name}`,
+                                        _captcha: "false"
+                                    })
+                                });
+                                alert('Message sent successfully!');
+                                form.reset();
+                            } catch (err) {
+                                window.location.href = `mailto:${PROFILE.email}?subject=Portfolio%20Contact&body=${encodeURIComponent(message)}%0A%0AFrom:%20${encodeURIComponent(email)}`;
+                            } finally {
+                                btn.innerText = originalText;
+                                btn.disabled = false;
+                            }
                         }}
                     >
                         <label className="wp-field">
