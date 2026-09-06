@@ -18,6 +18,16 @@ const projectData = [
   },
   {
     id: 2,
+    title: 'Loop & Bloom',
+    description: 'Handmade crochet & artisanal gift storefront featuring product showcases, custom gift order flows, and responsive aesthetic design.',
+    tags: ['React', 'Tailwind', 'Supabase', 'Vercel'],
+    category: 'web',
+    image: '/handmadebloom.jpg',
+    github: 'https://github.com/q04ti',
+    demo: 'https://handmadebloom.vercel.app/'
+  },
+  {
+    id: 3,
     title: 'E-Commerce Platform',
     description: 'A full-stack e-commerce solution with React, Node.js, and Stripe integration. Features real-time inventory and a custom CMS.',
     tags: ['React', 'Node.js', 'MongoDB', 'Stripe'],

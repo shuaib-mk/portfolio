@@ -66,6 +66,14 @@ const PROJECTS = [
     },
     {
         coord: "1, 0",
+        biome: "Flower Forest",
+        name: "Loop & Bloom",
+        desc: "Handmade crochet & artisanal gifts storefront featuring product showcases, custom gift orders, and responsive aesthetic design.",
+        tags: ["React", "Tailwind", "Supabase", "Vercel"],
+        href: "https://handmadebloom.vercel.app/",
+    },
+    {
+        coord: "0, 1",
         biome: "Plains",
         name: "Marketplace Storefront",
         desc: "A headless e-commerce front end with sub-second search and a custom checkout flow, built for a mid-size retailer.",

@@ -43,6 +43,7 @@ const SKILLS = [
 
 const PROJECTS = [
     { name: "ForgeFlow", desc: "Developer workflow dashboard & durable task execution platform with real-time logging.", biome: "Forge", href: "https://forge-flow.up.railway.app/" },
+    { name: "Loop & Bloom", desc: "Handmade crochet & artisanal gifts storefront with product catalog and custom order system.", biome: "Flower Forest", href: "https://handmadebloom.vercel.app/" },
     { name: "Marketplace Storefront", desc: "A headless e-commerce front end built with React and Stripe.", biome: "Plains", href: "#" },
     { name: "Realtime Ops Chat", desc: "Low-latency messaging layer using WebSockets and Redis.", biome: "Nether", href: "#" },
     { name: "Metrics Dashboard", desc: "Data visualization suite mapping complex user events.", biome: "Ocean", href: "#" },
