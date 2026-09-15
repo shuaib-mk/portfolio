@@ -19,7 +19,8 @@ function LoadingScreen() {
 const PROFILE = {
     name: "q04ti",
     role: "Developer",
-    tagline: "Passionate about building intuitive software, solving complex problems, and constantly learning new technologies.",
+    tagline: "Passionate about building intuitive software, solving complex problems, and constantly learning new technologies.
+my take: human brain > ai",
     email: "q04tiofficial@gmail.com",
     github: "https://github.com/q04ti"
 };
