@@ -19,7 +19,7 @@ function LoadingScreen() {
 const PROFILE = {
     name: "q04ti",
     role: "Developer",
-    tagline: "Passionate about building intuitive software, solving complex problems, and constantly learning new technologies. my take: human brain > ai",
+    tagline: "Passionate about building intuitive software, solving complex problems, and constantly learning new technologies. my take: human brain > ai.",
     email: "q04tiofficial@gmail.com",
     github: "https://github.com/q04ti"
 };
@@ -144,7 +144,7 @@ function Clouds() {
     const meshRef = useRef();
     const cloudGeo = useMemo(() => new THREE.BoxGeometry(4, 1, 4), []);
     const cloudMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#ffffff", transparent: true, opacity: 0.85 }), []);
-    
+
     const clouds = useMemo(() => {
         const arr = [];
         for (let i = 0; i < 25; i++) {
@@ -161,11 +161,11 @@ function Clouds() {
     useFrame((state, delta) => {
         if (!meshRef.current) return;
         const dummy = new THREE.Object3D();
-        
+
         clouds.forEach((c, i) => {
             c.x += delta * 0.8;
             if (c.x > 60) c.x -= 120;
-            
+
             dummy.position.set(c.x, c.y, c.z);
             dummy.scale.set(c.scale, 1, c.scale * 1.5);
             dummy.updateMatrix();
@@ -234,40 +234,40 @@ function World() {
 
                 if (type === "grass" && Math.random() > 0.98 && Math.abs(x) > 4 && Math.abs(z) > 4) {
                     // Prevent trees from spawning inside houses or NPCs
-                    const isOccupied = 
+                    const isOccupied =
                         (Math.abs(-6 - x) < 4 && Math.abs(-6 - z) < 4) || // Librarian area
                         (Math.abs(6 - x) < 4 && Math.abs(6 - z) < 4) ||   // Blacksmith area
                         (Math.abs(-6 - x) < 4 && Math.abs(6 - z) < 4) ||  // Cleric area
                         (Math.abs(9 - x) < 4 && Math.abs(6 - z) < 4) ||   // House 2
                         (Math.abs(-6 - x) < 4 && Math.abs(9 - z) < 4) ||  // House 3
                         (Math.abs(-6 - x) < 4 && Math.abs(-9 - z) < 4);   // House 1
-                    
+
                     if (isOccupied) continue;
 
                     const s = 0.6 + Math.random() * 0.6;
-                    
+
                     // To perfectly sit on the block below (which has top at y + 0.5), 
                     // the center of the first scaled block (size s) must be at y + 0.5 + s/2
                     const baseY = y + 0.5 + s / 2;
-                    
+
                     blocksByType["wood"].push({ pos: [x, baseY + 0 * s, z], scale: [s, s, s] });
                     blocksByType["wood"].push({ pos: [x, baseY + 1 * s, z], scale: [s, s, s] });
                     blocksByType["wood"].push({ pos: [x, baseY + 2 * s, z], scale: [s, s, s] });
                     blocksByType["wood"].push({ pos: [x, baseY + 3 * s, z], scale: [s, s, s] });
-                    
+
                     blocksByType["wood"].push({ pos: [x, baseY + 4 * s, z], scale: [s, s, s] });
-                    
+
                     for (let ly = 2; ly <= 5; ly++) {
                         let radius = (ly <= 3) ? 2 : 1;
                         for (let lx = -radius; lx <= radius; lx++) {
                             for (let lz = -radius; lz <= radius; lz++) {
                                 if (lx === 0 && lz === 0 && ly < 5) continue; // Skip trunk interior
-                                
+
                                 // Remove corners for a natural rounded canopy
                                 if (Math.abs(lx) === radius && Math.abs(lz) === radius) {
                                     if (ly === 5 || Math.random() > 0.5) continue;
                                 }
-                                
+
                                 blocksByType["leaves"].push({
                                     pos: [x + lx * s, baseY + ly * s, z + lz * s],
                                     scale: [s, s, s]
@@ -558,7 +558,7 @@ function TraditionalView() {
                         const originalText = btn.innerText;
                         btn.innerText = 'Sending...';
                         btn.disabled = true;
-                        
+
                         const name = e.target.elements[0].value;
                         const email = e.target.elements[1].value;
                         const message = e.target.elements[2].value;
