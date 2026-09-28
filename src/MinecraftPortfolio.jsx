@@ -42,7 +42,6 @@ const SKILLS = [
 ];
 
 const PROJECTS = [
-    { name: "Nexus AI", desc: "Intelligent AI assistant platform featuring real-time natural language reasoning, context-aware conversations, and custom knowledge retrieval.", biome: "Enchanted Grove", href: "https://sunniai.vercel.app/" },
     { name: "ForgeFlow", desc: "Developer workflow dashboard & durable task execution platform with real-time logging.", biome: "Forge", href: "https://forge-flow.up.railway.app/" },
     { name: "Loop & Bloom", desc: "Handmade crochet & artisanal gifts storefront with product catalog and custom order system.", biome: "Flower Forest", href: "https://handmadebloom.vercel.app/" },
 ];
